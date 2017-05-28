@@ -70,6 +70,8 @@ deactivate
 		
 Color:
 ------
-red 		[red part]
-green		[green part]
-blue		[blue part]
+red 			[red part]
+green			[green part]
+blue			[blue part]
+white			[gives dimmed white light, 0-255]
+brightness		[not implemented]

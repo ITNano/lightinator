@@ -52,8 +52,8 @@ def activateBulbs():
 def deactivateBulbs():
     lights.deactivate_bulbs(getSelectedBulbList())
     
-def setColor(red, green, blue):
-    lights.set_color(getSelectedBulbList(), red, green, blue, 0, -1)
+def setColor(color):
+    lights.set_color(getSelectedBulbList(), color.get("red", 0), color.get("green", 0), color.get("blue", 0), color.get("white", 0), color.get("brightness", 0))
     
 def increaseBrightness(increase=0.1):
     for bulb in getSelectedBulbList():

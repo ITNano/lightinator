@@ -39,7 +39,7 @@ def evaluateCommand(commandList, sensor, allowCommands):
                         elif mode == "absolute":
                             setColorListIndex(name, command.get("value"))
                         color = getColorFromList(name)
-                    application.setColor(color["red"], color["green"], color["blue"])
+                    application.setColor(color)
                 elif cmd == "setdimmer":
                     mode = command.get("mode")
                     if mode == "relative":
@@ -236,4 +236,4 @@ while True:
     elif cmd[:5] == "color":
         if len(cmd.split()) == 4:
             data = cmd.split()
-            application.setColor(int(data[1]), int(data[2]), int(data[3]))
+            application.setColor({"red":int(data[1]), "green":int(data[2]), "blue":int(data[3])})
