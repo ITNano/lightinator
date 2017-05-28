@@ -1,0 +1,73 @@
+Inputs:
+-------
+type [button, ultrasonic, ir]
+	type=button
+		pin			[gpio pin for button]
+		power		[gpio pin for supplying 3.3v]
+		holdTime	[refresh rate for hold events]
+		onpress		<command>
+		onrelease	<command>
+			Extra command properties:
+			holdMax		[Max hold time in seconds]
+			holdMin		[Min hold time in seconds]
+	type=ultrasonic
+		trigger		[gpio pin for trigger]
+		echo		[gpio pin for echo]
+		minDetect	[minimum distance to detect]
+		maxDetect	[maximum distance to detect]
+		minSleep	[lower sleep boundary, optional]
+		maxSleep	[upper sleep boundary, optional]
+		sleepTimes	[number of sleep values before going to sleep mode, optional]
+		onchange	<command>
+	type=ir
+		onpress
+			key			[trigger name]
+			<command>	[all properties of a normal command (note that this is not a separate object itself)]
+			
+** NOTE: All commands may as well be lists of commands. **
+		
+
+Commands:
+---------
+toggleservice
+	servicename [ir, button, ultrasonic]
+setcolor
+	color <color>
+	-- or --
+	colorlist [name of colorlist]
+	mode [relative, absolute, value]
+		mode=relative:
+			value [index offset]
+		mode=absolute:
+			value [index value]
+		mode=value:
+			# Fetches value from sensor
+setdimmer
+	mode [relative, absolute]
+		mode=relative:
+			value [% dimmer increase/decrease, between -1 and 1]
+		mode=absolute:
+			value [% dimmer value, between 0 and 1]
+select
+	mode [relative, absolute]
+		mode=relative:
+			value [index offset]
+		mode=absolute:
+			value [index value]
+unselect
+	mode [absolute]
+		mode=absolute:
+			value [index value]
+toggleselect
+	mode [absolute]
+		mode=absolute:
+			value [index value]
+activate
+deactivate
+		
+		
+Color:
+------
+red 		[red part]
+green		[green part]
+blue		[blue part]
