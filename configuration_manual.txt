@@ -43,11 +43,13 @@ setcolor
 		mode=value:
 			# Fetches value from sensor
 setdimmer
-	mode [relative, absolute]
+	mode [relative, absolute, value]
 		mode=relative:
 			value [% dimmer increase/decrease, between -1 and 1]
 		mode=absolute:
 			value [% dimmer value, between 0 and 1]
+		mode=value
+			# Fetches value from sensor
 select
 	mode [relative, absolute]
 		mode=relative:

@@ -46,6 +46,8 @@ def evaluateCommand(commandList, sensor, allowCommands):
                         application.increaseBrightness(command.get("value"))
                     elif mode == "absolute":
                         application.setBrightness(command.get("value"))
+                    elif mode == "value":
+                        application.setBrightness(sensor.getValue())
                 elif cmd == "select":
                     mode = command.get("mode")
                     if mode == "relative":

@@ -57,12 +57,13 @@ def setColor(red, green, blue):
     
 def increaseBrightness(increase=0.1):
     for bulb in getSelectedBulbList():
-        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], bulb["color"][3], max(0, min(1, (bulb["color"][4]/255.0)+increase))*255)
+        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], int(max(0.0, min(1.0, (bulb["color"][4]/255.0)+increase))*255.0), 0)
     
 def decreaseBrightness(decrease=0.1):
     for bulb in getSelectedBulbList():
-        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], bulb["color"][3], max(0, min(1, (bulb["color"][4]/255.0  )-decrease))*255)
+        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], int(max(0.0, min(1.0, (bulb["color"][4]/255.0)-decrease))*255.0), 0)
     
 def setBrightness(brightness):
+    print "Setting brightness: "+str(brightness)
     for bulb in getSelectedBulbList():
-        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], bulb["color"][3], int(max(0, min(1, brightness))*255))
+        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], int(max(0.0, min(1.0, brightness))*255.0), 0)

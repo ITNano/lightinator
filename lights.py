@@ -72,7 +72,7 @@ def set_color(bulbs, red, green, blue, white, strength, save_result = True):
     success = True
     for bulb in bulbs:
         if not bulb["actual_color"] == [red, green, blue, white, strength]:
-            print("Handling "+bulb["name"]+", setting color "+str((red, green, blue)))
+            print("Handling "+bulb["name"]+", setting color "+str((red, green, blue))+" [white="+str(white)+"]")
             if connect_to_bulb(bulb):
                 actual_strength = strength
                 if strength == -1:
