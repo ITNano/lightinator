@@ -179,7 +179,7 @@ def loadConfiguration(file):
     for item in configuration["inputs"]:
         if item["type"] == "button":
             buttons += 1
-            b = button.Button(id=buttons, pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime"))
+            b = button.Button(id=buttons, pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime", 1))
             b.onPress(buttonPressed)
             b.onRelease(buttonReleased)
             b.onHold(buttonHold)
