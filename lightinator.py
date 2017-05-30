@@ -48,6 +48,24 @@ def evaluateCommand(commandList, sensor, allowCommands):
                         application.setBrightness(command.get("value"))
                     elif mode == "value":
                         application.setBrightness(sensor.getValue())
+                elif cmd == "setmode":
+                    mode = command.get("mode")
+                    if mode == "absolute":
+                        application.setMode(command.get("value"))
+                    elif mode == "value":
+                        application.setMode(sensor.getValue())
+                elif cmd == "setspeed":
+                    mode = command.get("mode")
+                    if mode == "absolute":
+                        application.setSpeed(command.get("value"))
+                    elif mode == "value":
+                        application.setSpeed(sensor.getValue())
+                elif cmd == "setetd":
+                    mode = command.get("mode")
+                    if mode == "absolute":
+                        application.setEffectTimeDifference(command.get("value"))
+                    elif mode == "value":
+                        application.setEffectTimeDifference(sensor.getValue())
                 elif cmd == "select":
                     mode = command.get("mode")
                     if mode == "relative":

@@ -42,12 +42,30 @@ setcolor
 			value [index value]
 		mode=value:
 			# Fetches value from sensor
-setdimmer
+setdimmer	(works only in mode 0)
 	mode [relative, absolute, value]
 		mode=relative:
 			value [% dimmer increase/decrease, between -1 and 1]
 		mode=absolute:
 			value [% dimmer value, between 0 and 1]
+		mode=value
+			# Fetches value from sensor
+setmode
+	mode [absolute, value]
+		mode=absolute
+			value [integer: mode index 0-17, float: % of all modes]
+		mode=value
+			# Fetches value from sensor
+setspeed
+	mode [absolute, value]
+		mode=absolute
+			value [integer: speed 0-5, float: % of max speed]
+		mode=value
+			# Fetches value from sensor
+setetd		(Sets effect-time-difference)
+	mode [absolute, value]
+		mode=absolute
+			value [integer: etd value, float: % of max etd]
 		mode=value
 			# Fetches value from sensor
 select
@@ -74,4 +92,4 @@ red 			[red part]
 green			[green part]
 blue			[blue part]
 white			[gives dimmed white light, 0-255]
-brightness		[not implemented]
+unknown			[not implemented]

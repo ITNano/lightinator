@@ -6,14 +6,25 @@ from time import sleep
 
 PYTHON3 = False
 
+MAX_STRENGTH = 52.0
+NBR_OF_MODES = 17.0
+MAX_SPEED = 5.0
+MAX_ETD = 64.0
+
+
 def add_bulb(name, network, nic):
     bulb = {}
     bulb["name"] = name
     bulb["identifier"] = []
     for num in reversed([name[i:i+2] for i in range(3, len(name), 2)]):
         bulb["identifier"].append(int('0x'+num, 16))
-    bulb["color"] = [0x00, 0x00, 0x00, 0xDD, 0x00]
-    bulb["actual_color"] = None
+    bulb["identifier"].append(0x00)
+    bulb["color"] = [0x00, 0x00, 0x00, 0xDD]
+    bulb["prev_color"] = bulb["color"]
+    bulb["strength"] = int(MAX_STRENGTH)
+    bulb["mode"] = 0x00
+    bulb["speed"] = 0x04
+    bulb["etd"] = 0x01
     bulb["network"] = network
     bulb["nic"] = nic
     
@@ -56,39 +67,57 @@ def bulb_sort_order(bulb):
 def activate_bulbs(bulbs):
     success = True
     for bulb in bulbs:
-        res = set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], bulb["color"][3], bulb["color"][4], False)
+        res = set_color([bulb], bulb["prev_color"][0], bulb["prev_color"][1], bulb["prev_color"][2], bulb["prev_color"][3], False)
+        res = res and set_strength(bulb["strength"])
         success = success and res
     return success
     
 def deactivate_bulbs(bulbs):
-    return set_color(bulbs, 0x00, 0x00, 0x00, 0x00, 0x00, False)
+    return set_color(bulbs, 0x00, 0x00, 0x00, 0x00, False)
 
-def set_color(bulbs, red, green, blue, white, strength, save_result = True):
-    data = [0xFB, 0xEB, red, green, blue, white, strength]
-    for bulb in bulbs:
-        data.extend(bulb["identifier"])
-        data.append(0x00)
-            
+def set_color(bulbs, red, green, blue, white, save_result = True):
     success = True
     for bulb in bulbs:
-        if not bulb["actual_color"] == [red, green, blue, white, strength]:
-            print("Handling "+bulb["name"]+", setting color "+str((red, green, blue))+" [white="+str(white)+"]")
-            if connect_to_bulb(bulb):
-                actual_strength = strength
-                if strength == -1:
-                    actual_strength = bulb["color"][4]
-                    data[6] = actual_strength
-                if save_result:
-                    bulb["color"] = [red, green, blue, white, actual_strength]
-                bulb["actual_color"] = [red, green, blue, white, actual_strength]
-                packet_data = getPacketData(data)
-                send_message(packet_data, bulb["nic"]["broadcast"], bulb["nic"]["port"])
-            else:
-                print("\tNo change due to connection errors.")
-                success = False
-        else:
-            print("Color already set. Ignoring bulb "+bulb["name"])
+        if save_result:
+            bulb["prev_color"] = [red, green, blue, white]
+        bulb["color"] = [red, green, blue, white]
+        success = success and send_update(bulb, get_color_packet_data)
     return success
+    
+def set_strength(bulbs, strength):
+    return set_control_prop(bulbs, "strength", strength)
+        
+def set_mode(bulbs, mode):
+    return set_control_prop(bulbs, "mode", mode)
+    
+def set_speed(bulbs, speed):
+    return set_control_prop(bulbs, "speed", speed)
+    
+def set_effect_time_difference(bulbs, etd):
+    return set_control_prop(bulbs, "etd", etd)
+
+def set_control_prop(bulbs, prop, value):
+    success = True
+    value = int(value)
+    for bulb in bulbs:
+        bulb[prop] = value
+        success = success and send_update(bulb, get_control_packet_data)
+    return success
+    
+def get_color_packet_data(bulb):
+    return [0xFB, 0xEB, bulb["color"][0], bulb["color"][1], bulb["color"][2], bulb["color"][3], 0x00] + bulb["identifier"]
+            
+def get_control_packet_data(bulb):
+    return [0xFB, 0xEC, bulb["mode"], bulb["speed"], bulb["etd"], 0x02, bulb["strength"]] + bulb["identifier"]
+            
+def send_update(bulb, data_func):
+    if connect_to_bulb(bulb):
+        data = data_func(bulb)
+        packet_data = getPacketData(data)
+        send_message(packet_data, bulb["nic"]["broadcast"], bulb["nic"]["port"])
+        return True
+    else:
+        return False
 
 def getPacketData(data):
     if PYTHON3:
@@ -112,6 +141,7 @@ def connect_to_bulb(bulb):
         return True
     
 def send_message(content, addr, port, retransmits=3):
+    #print ''.join('{:02x} '.format(x) for x in content)
     if sock is not None:
         for i in range(0, retransmits):
             sock.sendto(content, (addr, port))

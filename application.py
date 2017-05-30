@@ -57,13 +57,31 @@ def setColor(color):
     
 def increaseBrightness(increase=0.1):
     for bulb in getSelectedBulbList():
-        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], int(max(0.0, min(1.0, (bulb["color"][4]/255.0)+increase))*255.0), 0)
+        lights.set_strength([bulb], int(max(0.0, min(1.0, (bulb["strength"]/lights.MAX_STRENGTH)+increase))*MAX_STRENGTH))
     
 def decreaseBrightness(decrease=0.1):
     for bulb in getSelectedBulbList():
-        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], int(max(0.0, min(1.0, (bulb["color"][4]/255.0)-decrease))*255.0), 0)
+        lights.set_strength([bulb], int(max(0.0, min(1.0, (bulb["strength"]/lights.MAX_STRENGTH)-decrease))*MAX_STRENGTH))
     
 def setBrightness(brightness):
     print "Setting brightness: "+str(brightness)
     for bulb in getSelectedBulbList():
-        lights.set_color([bulb], bulb["color"][0], bulb["color"][1], bulb["color"][2], int(max(0.0, min(1.0, brightness))*255.0), 0)
+        lights.set_strength([bulb], int(max(0.0, min(1.0, brightness))*lights.MAX_STRENGTH))
+
+def setMode(mode):
+    if type(mode) == float:
+        lights.set_mode(getSelectedBulbList(), int(mode*lights.NBR_OF_MODES))
+    else:
+        lights.set_mode(getSelectedBulbList(), mode)
+    
+def setSpeed(speed):
+    if type(speed) == float:
+        lights.set_speed(getSelectedBulbList(), int(speed*lights.MAX_SPEED))
+    else:
+        lights.set_speed(getSelectedBulbList(), speed)
+        
+def setEffectTimeDifference(etd):
+    if type(etd) == float:
+        lights.set_effect_time_difference(getSelectedBulbList(), int(etd*lights.MAX_ETD))
+    else:
+        lights.set_effect_time_difference(getSelectedBulbList(), etd)
