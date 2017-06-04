@@ -1,11 +1,12 @@
+from hardware import Hardware
 import RPi.GPIO as GPIO
 import time
 import threading
 
-class Button(object):
+class Button(Hardware):
     
     def __init__(self, id, pin, power, holdInterval=1):
-        self.id = id
+        Hardware.__init__(self, id, "Button")
         self.pin = pin
         self.power = power
         self.holdInterval = holdInterval

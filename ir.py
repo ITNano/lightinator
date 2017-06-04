@@ -1,13 +1,14 @@
+from hardware import Hardware
 import pylirc, time
 import threading
 
 DEBUG = False
 UPDATE_FREQ = 100
 
-class InfraRedSensor(object):
+class InfraRedSensor(Hardware):
 
     def __init__(self, id):
-        self.id = id
+        Hardware.__init__(self, id, "IR")
         self.value = None
         self.listening = False
         self.listeners = []

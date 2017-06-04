@@ -1,9 +1,10 @@
+from hardware import Hardware
 import RPi.GPIO as GPIO
 
-class LED(object):
+class LED(Hardware):
     
     def __init__(self, id, pin):
-        self.id = id
+        Hardware.__init__(self, id, "LED")
         self.pin = pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.OUT)
@@ -22,6 +23,3 @@ class LED(object):
         
     def setValue(self, value):
         GPIO.output(self.pin, value is not 0)
-        
-    def terminate(self):
-        pass

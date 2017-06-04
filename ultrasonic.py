@@ -1,12 +1,13 @@
+from hardware import Hardware
 import RPi.GPIO as GPIO
 import time
 
 DEBUG = False
 
-class UltraSonicSensor(object):
+class UltraSonicSensor(Hardware):
 
     def __init__(self, id, trigger, echo):
-        self.id = id
+        Hardware.__init__(self, id, "UltraSonic")
         self.trigger = trigger 
         self.echo = echo
         self.continousMeasure = False
