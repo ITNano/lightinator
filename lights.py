@@ -157,6 +157,10 @@ def load_config(conf):
         if connections.get(nic["name"]) is None:
             init_lightwifi(nic["name"])
             
+def unload_config():
+    global all_bulbs
+    all_bulbs = []
+            
 all_bulbs = []
 connections = {}
 sock = None

@@ -3,6 +3,9 @@ from property import Property
 
 selectedBulbs = []
 
+def clearConfig():
+    lights.unload_config()
+
 def loadConfig(config):
     global selectedBulbs
     lights.load_config(config)

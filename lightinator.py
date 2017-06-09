@@ -270,6 +270,9 @@ def unloadConfiguration():
     global colorLists
     colorLists = {}
     
+    # Clear subconfigs
+    application.clearConfig()
+    
 def cleanup():
     for key in sensors:
         sensors[key].terminate()
