@@ -21,6 +21,12 @@ RPi.GPIO:
 Netifaces
 `pip install netifaces`
 
+avplay or ffplay (audio)
+`sudo apt-get install ffmpeg libavcodec-extra-53`
+
+Pydub (audio)
+`sudo pip install pydub`
+
 Pylirc
 *See file setup_ir_receiver.txt*
 
