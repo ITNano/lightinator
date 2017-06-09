@@ -9,6 +9,7 @@ class Property(object):
     def addListener(self, listener):
         if listener is not None:
             self.listeners.append(listener)
+            listener(self.value)
             
     def removeListener(self, listener):
         self.listeners.remove(listener)
