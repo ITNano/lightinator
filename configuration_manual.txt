@@ -46,6 +46,13 @@ registers			[list of <register>]
 	datareg			[data register address for card]
 	dirreg			[direction register address for card]
 	initval			[initial value (optional), default 0x00]
+	
+Sounds
+--------
+name				[name to be used to reference it]
+path				[path to the file, .wav works best]
+start				[start time, optional]
+end					[end time, optional]
 
 Commands:
 ---------
@@ -104,6 +111,9 @@ toggleselect
 			value [index value]
 activate
 deactivate
+playsound
+	sound [name of the sound]
+stopsounds
 		
 		
 Color:

@@ -5,6 +5,7 @@ from led import LED
 from i2c import ExtensionCard
 from property import Property
 import ioutil
+import sound
 import application
 import threading
 import json
@@ -107,6 +108,10 @@ def evaluateCommand(commandList, sensor, allowCommands):
                     application.activateBulbs()
                 elif cmd == "deactivate":
                     application.deactivateBulbs()
+                elif cmd == "playsound":
+                    sound.playSound(command.get("sound"))
+                elif cmd == "stopsounds":
+                    sound.stopSounds()
         
 def buttonPressed(button):
     commandList = getCommandList("button", button, "press")
@@ -194,10 +199,16 @@ def loadConfiguration(file):
         colorLists[key]["colors"] = configuration["colors"][key]
         colorLists[key]["current"] = 0
     print "Loaded color lists"
+    
+    if configuration.get("sounds") is not None:
+        for clip in configuration["sounds"]:
+            sound.loadSound(clip["name"], clip["path"], clip.get("start"), clip.get("end"))
+        print "Loaded sounds"
 
     ioutil.init()
-    for card in configuration["extensioncards"]:
-        ioutil.addExtensionCard(ExtensionCard(card['address'], card['startpin'], card['registers'], card.get("name", "unknown")))
+    if configuration.get("extensioncards") is not None:
+        for card in configuration["extensioncards"]:
+            ioutil.addExtensionCard(ExtensionCard(card['address'], card['startpin'], card['registers'], card.get("name", "unknown")))
     print "Loaded extension cards"
     
     buttons = 0
