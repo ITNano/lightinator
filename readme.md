@@ -31,7 +31,7 @@ learning example but maybe not a reasonable running setup (though it is a valid 
 specified in the `configuration_manual.txt` file. The documentation for LIRC is located in `lirc_conf`.
 
 Note that the documentation for this project still isn't so good, since I doubt it will be used in any large scale
-(by many users). If you plan on using this on your system and has any questions, don't hesitate to mail me at
+(by many users). If you plan on using this on your system and have any questions, don't hesitate to mail me at
 lightinator@matzlarsson.se.
 
 ## How to run
