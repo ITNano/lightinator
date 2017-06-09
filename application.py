@@ -1,27 +1,35 @@
 import lights
+from property import Property
 
 selectedBulbs = []
 
 def loadConfig(config):
     global selectedBulbs
     lights.load_config(config)
-    selectedBulbs = [False]*len(lights.get_all_bulbs())
+    selectedBulbs = [Property(False, bool) for i in range(len(lights.get_all_bulbs()))]
+    
+def isValidIndex(index):
+    return index >= 0 and index<len(selectedBulbs)
+    
+def addSelectionListener(callback, index):
+    if isValidIndex(index):
+        selectedBulbs[index].addListener(callback)
 
 def selectBulb(index):
-    if index >= 0 and index<len(selectedBulbs):
-	    selectedBulbs[index] = True
+    if isValidIndex(index):
+	    selectedBulbs[index].setValue(True)
 
 def deselectBulb(index):
-    if index >= 0 and index<len(selectedBulbs):
-	    selectedBulbs[index] = False
+    if isValidIndex(index):
+	    selectedBulbs[index].setValue(False)
         
 def toggleSelect(index):
-    if index >= 0 and index<len(selectedBulbs):
-	    selectedBulbs[index] = not selectedBulbs[index]
+    if isValidIndex(index):
+	    selectedBulbs[index].setValue(not selectedBulbs[index].getValue())
         
 def unselectAllBulbs():
     for index in range(len(selectedBulbs)):
-        selectedBulbs[index] = False
+        selectedBulbs[index].setValue(False)
         
 def selectPrevBulb():
     lowestSelected = 1
@@ -42,7 +50,7 @@ def selectNextBulb():
 def getSelectedBulbList():
     bulbs = []
     for index in range(len(selectedBulbs)):
-        if selectedBulbs[index]:
+        if selectedBulbs[index].getValue():
             bulbs.append(lights.get_bulb_by_index(index))
     return bulbs
     
@@ -64,7 +72,6 @@ def decreaseBrightness(decrease=0.1):
         lights.set_strength([bulb], int(max(0.0, min(1.0, (bulb["strength"]/lights.MAX_STRENGTH)-decrease))*MAX_STRENGTH))
     
 def setBrightness(brightness):
-    print "Setting brightness: "+str(brightness)
     for bulb in getSelectedBulbList():
         lights.set_strength([bulb], int(max(0.0, min(1.0, brightness))*lights.MAX_STRENGTH))
 
