@@ -1,20 +1,19 @@
 from hardware import Hardware
-import RPi.GPIO as GPIO
 import time
 import threading
 
 class LED(Hardware):
     
-    def __init__(self, id, pin):
+    def __init__(self, iolib, id, pin, defaultValue=0):
         Hardware.__init__(self, id, "LED")
         self.pin = pin
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.OUT)
         self.blinking = False
+        self.io = iolib
+        self.io.setDirection(self.pin, self.io.OUT)
         self.setValue(defaultValue)
         
     def getValue(self):
-        return GPIO.input(self.pin)
+        return self.io.readPin(self.pin)
         
     def turnOn(self):
         self.setValue(1)
@@ -26,7 +25,7 @@ class LED(Hardware):
         self.setValue((self.getValue()+1)%2)
         
     def setValue(self, value):
-        GPIO.output(self.pin, value is not 0)
+        self.io.writePin(self.pin, value)
         
     # Note that the interval is for an entire cycle (on + off)    
     def blink(self, interval=1.0, endState=0):

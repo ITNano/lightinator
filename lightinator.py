@@ -1,6 +1,9 @@
 import button
 import ultrasonic
 import ir
+from led import LED
+from i2c import ExtensionCard
+import ioutil
 import application
 import threading
 import json
@@ -192,12 +195,19 @@ def loadConfiguration(file):
         colorLists[key]["current"] = 0
     print "Loaded color lists"
 
+    ioutil.init()
+    for card in configuration["extensioncards"]:
+        ioutil.addExtensionCard(ExtensionCard(card['address'], card['startpin'], card['registers'], card.get("name", "unknown")))
+    print "Loaded extension cards"
+    
     buttons = 0
     ultrasonics = 0
+    leds = 0
+    print "Allocating input sensors..."
     for item in configuration["inputs"]:
         if item["type"] == "button":
             buttons += 1
-            b = button.Button(id=buttons, pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime", 1))
+            b = button.Button(iolib=ioutil, id=buttons, pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime", 1))
             b.onPress(buttonPressed)
             b.onRelease(buttonReleased)
             b.onHold(buttonHold)
@@ -207,7 +217,7 @@ def loadConfiguration(file):
             commands["button:"+str(b.id)+":hold"] = item.get("onhold")
         elif item["type"] == "ultrasonic":
             ultrasonics += 1
-            usSensor = ultrasonic.UltraSonicSensor(id=ultrasonics, trigger=item["trigger"], echo=item["echo"])
+            usSensor = ultrasonic.UltraSonicSensor(iolib=ioutil, id=ultrasonics, trigger=item["trigger"], echo=item["echo"])
             t = threading.Thread(target=usSensor.startContinousMeasure, name="UltraSonic "+str(usSensor.id), args=(item["minDetect"], item["maxDetect"], ultrasonicChanged, item.get("minSleep", -1), item.get("maxSleep", -1), item.get("sleepTimes", -1)))
             t.daemon = True
             t.start()
@@ -221,37 +231,56 @@ def loadConfiguration(file):
             irSensor.startListen()
             sensors["ir"] = irSensor
             commands["ir:press"] = item["onpress"]
+        elif item["type"] == "led":
+            led = LED(iolib=ioutil, id=leds, pin=item["pin"])
+            if item["bind"] == "selection":
+                application.addSelectionListener(led.setValue, item["bindkey"])
     print "Loaded input sensors"
 
 def unloadConfiguration():
-    global sensors
-    for key in sensors:
-        sensors[key].terminate()
+    # Cleanup GPIO and sensors
+    cleanup()
+    
+    # Reset variables
     for key in services:
         services[key] = True
+    global sensors
     sensors = {}
+    global commands
     commands = {}
+    global colorLists
     colorLists = {}
+    
+def cleanup():
+    for key in sensors:
+        sensors[key].terminate()
+    ioutil.cleanup()
 
 #####################################################
 # ------------------ MAIN LOOP -------------------- #
 #####################################################
-# Main loop to keep program running
-configFile = "lightinator.conf"
-loadConfiguration(configFile)
-while True:
-    cmd = raw_input()
-    if cmd == 'end':
-        print("Ending program")
-        unloadConfiguration()
-        break
-    elif cmd == 'selection':
-        print(application.getSelectedBulbList())
-    elif cmd == 'reload':
-        unloadConfiguration()
-        print("")
-        loadConfiguration(configFile)
-    elif cmd[:5] == "color":
-        if len(cmd.split()) == 4:
-            data = cmd.split()
-            application.setColor({"red":int(data[1]), "green":int(data[2]), "blue":int(data[3])})
+try:
+    # Main loop to keep program running
+    configFile = "lightinator.conf"
+    loadConfiguration(configFile)
+    while True:
+        cmd = raw_input()
+        if cmd == 'end':
+            print("Ending program")
+            unloadConfiguration()
+            break
+        elif cmd == 'selection':
+            print(application.getSelectedBulbList())
+        elif cmd == 'reload':
+            unloadConfiguration()
+            print("")
+            loadConfiguration(configFile)
+        elif cmd[:5] == "color":
+            if len(cmd.split()) == 4:
+                data = cmd.split()
+                application.setColor({"red":int(data[1]), "green":int(data[2]), "blue":int(data[3])})
+except Exception as e:
+    print("Caught an exception during runtime, shutting down. Error as given below.")
+    cleanup()
+    raise e
+    

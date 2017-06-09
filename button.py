@@ -1,11 +1,10 @@
 from hardware import Hardware
-import RPi.GPIO as GPIO
 import time
 import threading
 
 class Button(Hardware):
     
-    def __init__(self, id, pin, power, holdInterval=1):
+    def __init__(self, iolib, id, pin, power, holdInterval=1):
         Hardware.__init__(self, id, "Button")
         self.pin = pin
         self.power = power
@@ -15,20 +14,19 @@ class Button(Hardware):
         self.onReleaseHandlers = []
         self.onHoldHandlers = []
         self.holdTimer = None
+        self.io = iolib
         self.initGPIO()
 
     def initGPIO(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         if self.power is not None:
-            GPIO.setup(self.power, GPIO.OUT)
-            GPIO.output(self.power, 1)
+            self.io.setDirection(self.power, self.io.OUT)
+            self.io.writePin(self.power, self.io.ON)
 
-        GPIO.add_event_detect(self.pin, GPIO.BOTH)
-        GPIO.add_event_callback(self.pin, self.changedState)
+        self.io.setDirection(self.pin, self.io.IN, pull_up_down=self.io.PUD_DOWN)
+        self.io.registerForChangeEvent(self.pin, self.changedState)
         
     def getValue(self):
-        return GPIO.input(self.pin)
+        return self.io.readPin(self.pin)
         
     def onPress(self, handler):
         if handler is not None:
@@ -82,9 +80,9 @@ class Button(Hardware):
                 handler(self, timeDiff)
 
     def isActive(self):
-        return GPIO.input(self.pin) == 1
+        return self.getValue() == 1
         
     def terminate(self):
-        GPIO.remove_event_detect(self.pin)
+        self.io.unregisterFromChangeEvent(self.pin)
         del self.onPressHandlers[:]
         del self.onReleaseHandlers[:]

@@ -1,27 +1,25 @@
 from hardware import Hardware
-import RPi.GPIO as GPIO
 import time
 
 DEBUG = False
 
 class UltraSonicSensor(Hardware):
 
-    def __init__(self, id, trigger, echo):
+    def __init__(self, iolib, id, trigger, echo):
         Hardware.__init__(self, id, "UltraSonic")
         self.trigger = trigger 
         self.echo = echo
         self.continousMeasure = False
-        self.initGPIO()
         self.value = 0
+        self.io = iolib
+        self.initGPIO()
 
     def initGPIO(self):
-        GPIO.setmode(GPIO.BCM)
+        self.io.setDirection(self.trigger, self.io.OUT)
+        self.io.setDirection(self.echo, self.io.IN)
 
-        GPIO.setup(self.trigger,GPIO.OUT)
-        GPIO.setup(self.echo,GPIO.IN)
-
-        GPIO.output(self.trigger, False)
-        print("Waiting For Sensor To Settle")
+        self.io.writePin(self.trigger, self.io.OFF)
+        print("Initializing hypersonic sensor, please wait.")
         time.sleep(2)
 
     def doMeasure(self):
@@ -29,14 +27,14 @@ class UltraSonicSensor(Hardware):
         pulse_start = 0
         pulse_end = 0
         
-        GPIO.output(self.trigger, True)
+        self.io.writePin(self.trigger, self.io.ON)
         time.sleep(0.00001)
-        GPIO.output(self.trigger, False)
+        self.io.writePin(self.trigger, self.io.OFF)
 
-        while GPIO.input(self.echo)==0:
+        while self.io.readPin(self.echo)==0:
             pulse_start = time.time()
           
-        while GPIO.input(self.echo)==1:
+        while self.io.readPin(self.echo)==1:
             pulse_end = time.time()
         
         pulse_duration = pulse_end - pulse_start
@@ -87,7 +85,3 @@ class UltraSonicSensor(Hardware):
 
     def terminate(self):
         self.continousMeasure = False
-        GPIO.cleanup()
-
-def cleanup():
-    GPIO.cleanup()
