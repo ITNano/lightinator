@@ -191,6 +191,9 @@ def loadConfiguration(file):
         
     print("Using configuration by %s from %s (version %s)" % (configuration["author"], configuration["date"], configuration["version"]))
     
+    if configuration.get("debug") is not None and configuration["debug"].lower() == "on":
+        sound.DEBUG = True
+    
     application.loadConfig(configuration["hardware"])
     print "Loaded hardware specs"
 

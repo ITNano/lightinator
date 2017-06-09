@@ -31,6 +31,7 @@ def which(program):
             
 ########################################################################################################################
 
+DEBUG = False
 sounds = {}
 PLAYER = getPlayerName()
 playProcess = None
@@ -63,7 +64,11 @@ def playSound(name, loop=None):
         if loop is not None:
             procArgs.extend(["-loop", str(loop)])
         procArgs.append(file.name)
-        playProcess = subprocess.Popen(procArgs)
+        devnull = open(os.devnull, 'wb')
+        if not DEBUG:
+            playProcess = subprocess.Popen(procArgs, stdout=devnull, stderr=devnull)
+        else:
+            playProcess = subprocess.Popen(procArgs)
         
 def stopSounds():
     if playProcess is not None:
