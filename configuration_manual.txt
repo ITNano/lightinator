@@ -23,9 +23,29 @@ type [button, ultrasonic, ir]
 		onpress
 			key			[trigger name]
 			<command>	[all properties of a normal command (note that this is not a separate object itself)]
+	type=led
+		pin			[gpio pin for led]
+		bind		enum[selection]
+			bind=selection:
+				bindkey		[what bulb index to bind to (absolute value)]
+			bind=services
+				bindkey		[name of service: button|ultrasonic|ir]
 			
 ** NOTE: All commands may as well be lists of commands. **
-		
+
+Expansion cards:
+-----------------
+name				[name of the card]
+address				[I2C address]
+startpin			[first pin to use as logical pin address]
+registers			[list of <register>]
+
+<register>
+	name			[name of the register]
+	size			[size in bits, default 8]
+	datareg			[data register address for card]
+	dirreg			[direction register address for card]
+	initval			[initial value (optional), default 0x00]
 
 Commands:
 ---------
