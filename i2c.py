@@ -49,7 +49,6 @@ class ExtensionCard(object):
             addr = register['dirreg']
             
         # Actual write
-        print self.name+" ACTUALLY writing "+"{0:b}".format(value)+" to addr "+str(addr)
         if register['size'] <= 8:
             self.device.write8(addr, value)
         else:
@@ -68,7 +67,7 @@ class ExtensionCard(object):
             return self.device.readU16(register['datareg'])
         
     def writeBit(self, pin, value):
-        print self.name+" writing "+str(value)+" to pin "+str(pin)
+        value = normalizeValue(value)
         if self.pinIsInCard(pin):
             register = self.findRegister(pin)
             bitmask = ~(0x01 << (pin-register['startpin']))
@@ -87,7 +86,13 @@ class ExtensionCard(object):
             bitmask = ~(0x01 << (pin-register['startpin']))
             valuemask = value << (pin-register['startpin'])
             self.writeRegister(register, (register['dirvalue'] & bitmask) | valuemask, False)
-            
+          
+def normalizeValue(value):
+    if value is False or value is 0:
+        return 0
+    else:
+        return 1
+          
 def getNumberOfPins(registers):
     count = 0
     for register in registers:
