@@ -63,7 +63,8 @@ def stopSounds():
         playProcess.terminate()
         
 def cleanup():
-    for file in sounds:
+    global sounds
+    for name, file in sounds.iteritems():
         file.close()
         os.remove(file.name)
     sounds = {}

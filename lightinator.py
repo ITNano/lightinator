@@ -272,6 +272,7 @@ def unloadConfiguration():
     
     # Clear subconfigs
     application.clearConfig()
+    sound.cleanup()
     
 def cleanup():
     for key in sensors:
