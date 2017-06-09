@@ -21,7 +21,7 @@ def selectBulb(index):
 
 def deselectBulb(index):
     if isValidIndex(index):
-	    selectedBulbs[index].setValue(False)
+        selectedBulbs[index].setValue(False)
         
 def toggleSelect(index):
     if isValidIndex(index):
@@ -29,20 +29,21 @@ def toggleSelect(index):
         
 def unselectAllBulbs():
     for index in range(len(selectedBulbs)):
-        selectedBulbs[index].setValue(False)
+        deselectBulb(index)
         
 def selectPrevBulb():
     lowestSelected = 1
     for i in range(len(selectedBulbs)):
-        if selectedBulbs[i]:
+        if selectedBulbs[i].getValue():
             lowestSelected = i
+            break
     unselectAllBulbs()
     selectBulb((lowestSelected-1)%len(selectedBulbs))
     
 def selectNextBulb():
     highestSelected = -1
     for i in range(len(selectedBulbs)):
-        if selectedBulbs[i]:
+        if selectedBulbs[i].getValue():
             highestSelected = i
     unselectAllBulbs()
     selectBulb((highestSelected+1)%len(selectedBulbs))
