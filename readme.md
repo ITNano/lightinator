@@ -28,9 +28,11 @@ Pylirc
 The configuration of hardware, events on sensor usage and similar are all defined in the `lightinator.conf` file with
 json markup. The exising configuration file contains a lot of examples on how to do most possible things and is a good
 learning example but maybe not a reasonable running setup (though it is a valid setup!). All possible commands is
-specified in the `configuration_manual.txt` file. Note that the documentation for this project still isn't so good, since
-I doubt it will be used in any large scale (by many users). If you plan on using this on your system and has any questions,
-don't hesitate to mail me at lightinator@matzlarsson.se.
+specified in the `configuration_manual.txt` file. The documentation for LIRC is located in `lirc_conf`.
+
+Note that the documentation for this project still isn't so good, since I doubt it will be used in any large scale
+(by many users). If you plan on using this on your system and has any questions, don't hesitate to mail me at
+lightinator@matzlarsson.se.
 
 ## How to run
 To start the script use:
