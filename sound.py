@@ -54,12 +54,16 @@ def loadSound(name, filename, start=0, end=0):
     else:
         print "Warning: Duplicate sound ID - '"+name+"'"
     
-def playSound(name):
+def playSound(name, loop=None):
     file = sounds.get(name)
     if file is not None:
         global playProcess
         stopSounds()
-        playProcess = subprocess.Popen([PLAYER, "-nodisp", "-autoexit", file.name])
+        procArgs = [PLAYER, "-nodisp", "-autoexit"]
+        if loop is not None:
+            procArgs.extend(["-loop", str(loop)])
+        procArgs.append(file.name)
+        playProcess = subprocess.Popen(procArgs)
         
 def stopSounds():
     if playProcess is not None:

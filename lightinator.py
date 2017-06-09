@@ -109,7 +109,7 @@ def evaluateCommand(commandList, sensor, allowCommands):
                 elif cmd == "deactivate":
                     application.deactivateBulbs()
                 elif cmd == "playsound":
-                    sound.playSound(command.get("sound"))
+                    sound.playSound(command.get("sound"), command.get('loop'))
                 elif cmd == "stopsounds":
                     sound.stopSounds()
         

@@ -53,6 +53,7 @@ name				[name to be used to reference it]
 path				[path to the file, .wav works best]
 start				[start time, optional]
 end					[end time, optional]
+loop				[default off, number of times to loop (0 means infinite many), optional]
 
 Commands:
 ---------
