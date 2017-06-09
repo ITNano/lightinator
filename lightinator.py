@@ -3,6 +3,7 @@ import ultrasonic
 import ir
 from led import LED
 from i2c import ExtensionCard
+from property import Property
 import ioutil
 import application
 import threading
@@ -13,9 +14,9 @@ sensors = {}
 commands = {}
 colorLists = {}
 services = {}
-services["button"] = True
-services["ultrasonic"] = True
-services["ir"] = True
+services["button"] = Property(True, bool)
+services["ultrasonic"] = Property(True, bool)
+services["ir"] = Property(True, bool)
 
 def evaluateCommand(commandList, sensor, allowCommands):
     if not type(commandList) is list:
@@ -26,8 +27,8 @@ def evaluateCommand(commandList, sensor, allowCommands):
         if command is not None:
             cmd = command.get("command")
             if cmd == "toggleservice":
-                services[command.get("service")] = not services[command.get("service")]
-                print("Service state ["+command.get("service")+"]: "+str(services[command.get("service")]))
+                services[command.get("service")].setValue(not services[command.get("service")].getValue())
+                print("Service state ["+command.get("service")+"]: "+str(services[command.get("service")].getValue()))
             elif allowCommands:
                 if cmd == "setcolor":
                     if command.get("color") is not None:
@@ -109,7 +110,7 @@ def evaluateCommand(commandList, sensor, allowCommands):
         
 def buttonPressed(button):
     commandList = getCommandList("button", button, "press")
-    evaluateCommand(commandList, button, services["button"])
+    evaluateCommand(commandList, button, services["button"].getValue())
     
 def buttonReleased(button, holdTime):
     commandList = getCommandList("button", button, "release")
@@ -136,12 +137,11 @@ def onButtonTimeEvent(button, commandList, holdTime):
         if command.get("holdMinInclusive") is not None:
             valid &= holdTime >= command.get("holdMinInclusive")
         if valid:
-            evaluateCommand(command, button, services["button"])
+            evaluateCommand(command, button, services["button"].getValue())
     
-
 def ultrasonicChanged(ultrasonic, value):
     commandList = getCommandList("ultrasonic", ultrasonic, "change")
-    evaluateCommand(commandList, ultrasonic, services["ultrasonic"])
+    evaluateCommand(commandList, ultrasonic, services["ultrasonic"].getValue())
     
 def irKeyPress(trigger):
     commandList = commands.get("ir:press")
@@ -152,7 +152,7 @@ def irKeyPress(trigger):
     for command in commandList:
         if command.get("key") == trigger:
             triggered = True
-            evaluateCommand(command, sensors["ir"], services["ir"])
+            evaluateCommand(command, sensors["ir"], services["ir"].getValue())
             
     if not triggered and trigger != "default":
         irKeyPress("default")
@@ -184,7 +184,7 @@ def loadConfiguration(file):
     with open(file) as conf_file:    
         configuration = byteify(json.load(conf_file))
         
-    print("Using configuration by %s from %s" % (configuration["author"], configuration["date"]))
+    print("Using configuration by %s from %s (version %s)" % (configuration["author"], configuration["date"], configuration["version"]))
     
     application.loadConfig(configuration["hardware"])
     print "Loaded hardware specs"
@@ -235,6 +235,8 @@ def loadConfiguration(file):
             led = LED(iolib=ioutil, id=leds, pin=item["pin"])
             if item["bind"] == "selection":
                 application.addSelectionListener(led.setValue, item["bindkey"])
+            elif item["bind"] == "service":
+                services[item["bindkey"]].addListener(led.setValue)
     print "Loaded input sensors"
 
 def unloadConfiguration():
@@ -243,7 +245,7 @@ def unloadConfiguration():
     
     # Reset variables
     for key in services:
-        services[key] = True
+        services[key] = Property(True, bool)
     global sensors
     sensors = {}
     global commands
