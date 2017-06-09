@@ -6,6 +6,7 @@ from i2c import ExtensionCard
 from property import Property
 import ioutil
 import sound
+import util
 import application
 import threading
 import json
@@ -112,6 +113,8 @@ def evaluateCommand(commandList, sensor, allowCommands):
                     sound.playSound(command.get("sound"), command.get('loop'))
                 elif cmd == "stopsounds":
                     sound.stopSounds()
+                elif cmd == "restartnic":
+                    util.resetNICs(command.get('nic', 'wlan'))
         
 def buttonPressed(button):
     commandList = getCommandList("button", button, "press")

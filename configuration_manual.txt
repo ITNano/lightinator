@@ -115,6 +115,8 @@ deactivate
 playsound
 	sound [name of the sound]
 stopsounds
+restartnic
+	nic			[initial part of the NIC, for example '', 'wlan' or 'wlan0']
 		
 		
 Color:

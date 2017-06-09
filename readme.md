@@ -21,6 +21,9 @@ RPi.GPIO:
 Netifaces
 `pip install netifaces`
 
+PsUtil
+`sudo pip install psutil`
+
 avplay or ffplay (audio)
 `sudo apt-get install ffmpeg libavcodec-extra-53`
 
