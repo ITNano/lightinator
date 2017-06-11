@@ -286,7 +286,7 @@ def cleanup():
 #####################################################
 try:
     # Main loop to keep program running
-    configFile = "lightinator.conf"
+    configFile = "conf/lightinator.conf"
     loadConfiguration(configFile)
     while True:
         cmd = raw_input()

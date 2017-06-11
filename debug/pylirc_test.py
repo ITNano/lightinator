@@ -44,7 +44,7 @@ import pylirc, time
 blocking = 0;
 
 #
-if(pylirc.init("pylirc", "../lirc_conf", blocking)):
+if(pylirc.init("pylirc", "../conf/lirc_conf", blocking)):
 
    code = {"config" : ""}
    while(code["config"] != "quit"):

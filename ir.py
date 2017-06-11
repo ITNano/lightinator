@@ -13,7 +13,7 @@ class InfraRedSensor(Hardware):
         self.listening = False
         self.listeners = []
         self.closed = False
-        if not pylirc.init("pylirc", "./lirc_conf", False):
+        if not pylirc.init("pylirc", "conf/lirc_conf", False):
             print("Warning: Could not load IR dependencies")
         else:
             t = threading.Thread(target=self.listenLoop, name="IR Thread")
