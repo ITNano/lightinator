@@ -1,10 +1,46 @@
 from subprocess import Popen, PIPE, call
 from time import sleep
+from util import *
 
-light_wifis = {'CL_CFD4AA':0, 'CL_CFD4BA':1, 'CL_CFD4FA':2};
+light_wifis = {}
 current_connection = {}
+registered_networks = {}
+        
+def register_network(network, nic='wlan0'):
+    if registered_networks.get(nic) is None:
+        registered_networks[nic] = []
+    registered_networks[nic].append(network)
+    
+def unregister_all_networks():
+    global registered_networks
+    registered_networks = {}
+    global light_wifis
+    light_wifis = {}
+    
+def prepare_for_connections():
+    base_wpa_supplicant = readFile('data/wpa_supplicant_base.conf')
+    base_interfaces = readFile('data/interfaces_base')
+    interfaces = base_interfaces
+    network_counter = 0
+    for nic in registered_networks:
+        # Handle general setup for NIC
+        interfaces = interfaces + "allow-hotplug {0}\niface {0} inet manual\n\twpa-conf /etc/wpa_supplicant/wpa_supplicant_{0}.conf\n\n".format(nic)
+        # Handle each individual network
+        nic_wpa_supplicant = base_wpa_supplicant
+        for network in registered_networks[nic]:
+            nic_wpa_supplicant = nic_wpa_supplicant + "network={{{{\n\tssid=\"{0}\"\n\tkey_mgmt=NONE\n\tid_str=\"Bulb_{0}\"\n\tpriority={{}}\n}}}}\n\n".format(network["name"])
+            interfaces = interfaces + "iface Bulb_{} inet static\n\taddress {}\n\tgateway {}\n\tnetmask {}\n\n".format(network["name"], network["address"], network["gateway"], network["mask"])
+            light_wifis[network["name"]] = network_counter
+            network_counter = network_counter+1
+        # Write to temporary template file and system folder
+        writeFile('data/tmp/wpa_supplicant_{}.conf'.format(nic), nic_wpa_supplicant)
+        actual_contents = nic_wpa_supplicant.format(*get_priority_list(-1, len(light_wifis)))
+        writeFile('/etc/wpa_supplicant/wpa_supplicant_{}.conf'.format(nic), actual_contents)
+    # Write to temporary template file (not needed in this case) and system
+    writeFile('data/tmp/interfaces_compiled', interfaces)
+    writeFile('/etc/network/interfaces', interfaces)
 
-def init_lightwifi(nic='wlan0'):
+def init_lightwifi(nic='wlan0', network=None):
     args = "sudo iw dev "+nic+" info | grep ssid | sed -e 's/ssid / /g'"
     proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
     output, err = proc.communicate(b"")
@@ -13,9 +49,11 @@ def init_lightwifi(nic='wlan0'):
         print(nic+" connected to : "+get_current_connection(nic))
     else:
         print("No previous connection found")
+    if network is not None:
+        connect(network, nic)
 
 def get_wifis(nic='wlan0'):
-    args = "sudo iw dev wlan0 scan | grep SSID | sort | uniq | sed -e \"s/SSID: / /g\""
+    args = "sudo iw dev {} scan | grep SSID | sort | uniq | sed -e \"s/SSID: / /g\"".format(nic)
     proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
     output, err = proc.communicate(b"")
     if proc.returncode == 0:
@@ -44,12 +82,9 @@ def connect(name, nic='wlan0'):
     if wifi_online(name, nic):
         index = light_wifis.get(name, -1)
         if index >= 0:
-            f_in = open('data/wpa_supplicant.conf', 'r')
-            template = f_in.read()
+            template = readFile('data/tmp/wpa_supplicant_{}.conf'.format(nic))
             wpa_supplicant_contents = template.format(*get_priority_list(index, len(light_wifis)))
-            f_out = open('/etc/wpa_supplicant/wpa_supplicant_lights.conf', 'w')
-            chars_written = f_out.write(wpa_supplicant_contents)
-            f_out.close()
+            chars_written = writeFile('/etc/wpa_supplicant/wpa_supplicant_{}.conf'.format(nic), wpa_supplicant_contents)
             if chars_written > 0 or chars_written is None:
                 call(["ifdown", nic])
                 call(["ifup", nic])

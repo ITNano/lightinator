@@ -1,7 +1,7 @@
 import json
 from socket import *
 import netifaces
-from lightwifi import connect,get_current_connection,init_lightwifi
+import lightwifi
 from time import sleep
 
 PYTHON3 = False
@@ -62,7 +62,7 @@ def get_rooms_of_bulb(bulb):
     return bulb_rooms
     
 def bulb_sort_order(bulb):
-    return "" if bulb["name"] == get_current_connection() else bulb["name"]
+    return "" if bulb["name"] == lightwifi.get_current_connection() else bulb["name"]
     
 def activate_bulbs(bulbs):
     success = True
@@ -114,7 +114,7 @@ def send_update(bulb, data_func):
     if connect_to_bulb(bulb):
         data = data_func(bulb)
         packet_data = getPacketData(data)
-        send_message(packet_data, bulb["nic"]["broadcast"], bulb["nic"]["port"])
+        send_message(packet_data, bulb["network"]["broadcast"], bulb["network"]["port"])
         return True
     else:
         return False
@@ -127,10 +127,10 @@ def getPacketData(data):
     
 def connect_to_bulb(bulb):
     global sock
-    network = bulb["network"]
-    nic = bulb["nic"]["name"]
+    network = bulb["network"]["name"]
+    nic = bulb["nic"]
     if(connections.get(nic) is None or connections[nic].get("network") != network):
-        success = connect(network, nic)
+        success = lightwifi.connect(network, nic)
         sock = socket(AF_INET, SOCK_DGRAM)
         sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -152,14 +152,34 @@ def send_message(content, addr, port, retransmits=3):
     
 def load_config(conf):
     for bulb in conf["bulbs"]:
-        nic = bulb.get("nic", conf.get("defaultnic", { "name": "wlan0", "broadcast": "192.168.4.255", "port": 30977 }))
-        add_bulb(bulb["name"], bulb.get("network", bulb["name"]), nic)
-        if connections.get(nic["name"]) is None:
-            init_lightwifi(nic["name"])
+        nic = bulb.get("nic", conf.get("defaultnic", "wlan0"))
+        network = get_network(bulb["name"], bulb.get("network"), conf.get("defaultnetwork"))
+        add_bulb(bulb["name"], network, nic)
+        lightwifi.register_network(network, nic)
+    lightwifi.prepare_for_connections()
+    # Init connections
+    for bulb in all_bulbs:
+        if connections.get(bulb["nic"]) is None:
+            lightwifi.init_lightwifi(bulb["nic"], bulb["network"]["name"])
             
 def unload_config():
     global all_bulbs
     all_bulbs = []
+    lightwifi.unregister_all_networks()
+    
+def get_network(bulbName, custom, default):
+    if custom is None:
+        if default is None:
+            print "WARNING: No available network description found. Please check configuration!"
+        custom = {}
+        
+    network = {}
+    properties = ["gateway", "address", "mask", "broadcast", "port", "name"]
+    for prop in properties:
+        network[prop] = custom.get(prop, default.get(prop))
+    if network.get("name") is None:
+        network["name"] = bulbName
+    return network
             
 all_bulbs = []
 connections = {}

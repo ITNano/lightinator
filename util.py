@@ -44,3 +44,11 @@ def which(program):
         program_path = os.path.join(envdir, program)
         if os.path.isfile(program_path) and os.access(program_path, os.X_OK):
             return program_path
+            
+def writeFile(file, contents):
+    with open(file, 'w') as f:
+        return f.write(contents)
+        
+def readFile(file):
+    with open(file, 'r') as f:
+        return f.read()

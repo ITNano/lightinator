@@ -294,6 +294,8 @@ try:
             break
         elif cmd == 'selection':
             print(application.getSelectedBulbList())
+        elif cmd == 'restart':
+            evaluateCommand([{'command':'restartnic'}], None, True)
         elif cmd == 'reload':
             unloadConfiguration()
             print("")
