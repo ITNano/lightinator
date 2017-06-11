@@ -29,9 +29,13 @@ def addSelectionListener(selectingCallback, selectedCallback, index):
 def selectBulb(index):
     if isValidIndex(index):
         selectingBulbs[index].setValue(True)
-        lights.connect_to_bulb(lights.get_bulb_by_index(index))
+        connected = lights.connect_to_bulb(lights.get_bulb_by_index(index))
         selectingBulbs[index].setValue(False)
+        # Trigger the change, and then set as it should
+        #(in order to always trigger change event)
         selectedBulbs[index].setValue(True)
+        if not connected:
+            deselectBulb(index)
 
 def deselectBulb(index):
     if isValidIndex(index):
@@ -46,7 +50,7 @@ def unselectAllBulbs():
         deselectBulb(index)
         
 def selectPrevBulb():
-    lowestSelected = 1
+    lowestSelected = 0
     for i in range(len(selectedBulbs)):
         if selectedBulbs[i].getValue():
             lowestSelected = i

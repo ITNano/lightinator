@@ -131,10 +131,11 @@ def connect_to_bulb(bulb):
     nic = bulb["nic"]
     if(connections.get(nic) is None or connections[nic].get("network") != network):
         success = lightwifi.connect(network, nic)
-        sock = socket(AF_INET, SOCK_DGRAM)
-        sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-        connections[nic] = {"sock":sock, "network": network}
+        if success:
+            sock = socket(AF_INET, SOCK_DGRAM)
+            sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+            sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+            connections[nic] = {"sock":sock, "network": network}
         return success
     else:
         sock = connections[nic]["sock"]
