@@ -9,7 +9,7 @@ class Property(object):
     def addListener(self, listener):
         if listener is not None:
             self.listeners.append(listener)
-            listener(self.value)
+            self.notifyListener(listener, self.value)
             
     def removeListener(self, listener):
         self.listeners.remove(listener)
@@ -22,4 +22,21 @@ class Property(object):
             if self.value is not value:
                 self.value = value
                 for listener in self.listeners:
-                    listener(value)
+                    self.notifyListener(listener, value)
+                    
+    def notifyListener(self, listener, value):
+        listener(value)
+
+class BoolProperty(Property):
+
+    DOWN = 0b01
+    UP = 0b10
+    BOTH = 0b11
+
+    def __init__(self, value, eventsDir=BOTH):
+        Property.__init__(self, value, bool)
+        self.eventsDir = eventsDir
+        
+    def notifyListener(self, listener, value):
+        if self.eventsDir & (0x01 << int(value)) > 0:
+            listener(value)

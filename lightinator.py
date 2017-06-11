@@ -251,7 +251,7 @@ def loadConfiguration(file):
         elif item["type"] == "led":
             led = LED(iolib=ioutil, id=leds, pin=item["pin"])
             if item["bind"] == "selection":
-                application.addSelectionListener(led.setValue, item["bindkey"])
+                application.addSelectionListener(led.blink, led.setValue, item["bindkey"])
             elif item["bind"] == "service":
                 services[item["bindkey"]].addListener(led.setValue)
     print "Loaded input sensors"

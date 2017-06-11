@@ -1,26 +1,37 @@
 import lights
-from property import Property
+from property import Property,BoolProperty
 
 selectedBulbs = []
+selectingBulbs = []
 
 def clearConfig():
     lights.unload_config()
+    global selectedBulbs
+    selectedBulbs = []
+    global selectingBulbs
+    selectingBulbs = []
 
 def loadConfig(config):
     global selectedBulbs
+    global selectingBulbs
     lights.load_config(config)
     selectedBulbs = [Property(False, bool) for i in range(len(lights.get_all_bulbs()))]
+    selectingBulbs = [BoolProperty(False, BoolProperty.UP) for i in range(len(lights.get_all_bulbs()))]
     
 def isValidIndex(index):
     return index >= 0 and index<len(selectedBulbs)
     
-def addSelectionListener(callback, index):
+def addSelectionListener(selectingCallback, selectedCallback, index):
     if isValidIndex(index):
-        selectedBulbs[index].addListener(callback)
+        selectingBulbs[index].addListener(selectingCallback)
+        selectedBulbs[index].addListener(selectedCallback)
 
 def selectBulb(index):
     if isValidIndex(index):
-	    selectedBulbs[index].setValue(True)
+        selectingBulbs[index].setValue(True)
+        lights.connect_to_bulb(lights.get_bulb_by_index(index))
+        selectingBulbs[index].setValue(False)
+        selectedBulbs[index].setValue(True)
 
 def deselectBulb(index):
     if isValidIndex(index):

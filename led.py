@@ -8,6 +8,7 @@ class LED(Hardware):
         Hardware.__init__(self, id, "LED")
         self.pin = pin
         self.blinking = False
+        self.overrideBlinkEndState = False
         self.io = iolib
         self.io.setDirection(self.pin, self.io.OUT)
         self.setValue(defaultValue)
@@ -24,7 +25,10 @@ class LED(Hardware):
     def toggle(self):
         self.setValue((self.getValue()+1)%2)
         
-    def setValue(self, value):
+    def setValue(self, value, overrideBlink=True):
+        if overrideBlink:
+            self.overrideBlinkEndState = True
+            self.stopBlink()
         self.io.writePin(self.pin, value)
         
     # Note that the interval is for an entire cycle (on + off)    
@@ -35,17 +39,19 @@ class LED(Hardware):
             self.blinkEndState = endState
         else:
             self.blinking = True
+            self.overrideBlinkEndState = False
             self.blinkInterval = interval
             self.blinkEndState = endState
             
             def runBlink(self):
                 while(self.blinking):
-                    self.turnOn()
+                    self.setValue(1, False)
                     time.sleep(self.blinkInterval/2)
                     if self.blinking:                       # Make sure blink not cancelled
-                        self.turnOff()
+                        self.setValue(0, False)
                         time.sleep(self.blinkInterval/2)
-                self.setValue(self.blinkEndState)
+                if not self.overrideBlinkEndState:
+                    self.setValue(self.blinkEndState)
             t = threading.Thread(target=runBlink, args=(self,))
             t.daemon = True
             t.start()
