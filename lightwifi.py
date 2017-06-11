@@ -45,7 +45,7 @@ def init_lightwifi(nic='wlan0', network=None):
     proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
     output, err = proc.communicate(b"")
     if proc.returncode == 0:
-        set_current_connection(nic, output.decode("utf-8").strip())
+        set_current_connection(nic, str(output.decode("utf-8").strip()))
         print(nic+" connected to : "+get_current_connection(nic))
     else:
         print("No previous connection found")

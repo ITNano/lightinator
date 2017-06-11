@@ -135,6 +135,7 @@ def connect_to_bulb(bulb):
             sock = socket(AF_INET, SOCK_DGRAM)
             sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+            sock.setsockopt(SOL_SOCKET, 25, nic)
             connections[nic] = {"sock":sock, "network": network}
         return success
     else:
