@@ -3,7 +3,7 @@ import ultrasonic
 import ir
 from led import LED
 from i2c import ExtensionCard
-from property import Property
+from property import BoolProperty
 import ioutil
 import sound
 import util
@@ -12,13 +12,11 @@ import threading
 import json
 import math
 
-sensors = {}
-commands = {}
+sensors = []
+irSensor = None
+events = {}
 colorLists = {}
-services = {}
-services["button"] = Property(True, bool)
-services["ultrasonic"] = Property(True, bool)
-services["ir"] = Property(True, bool)
+services = {"button": BoolProperty(True), "ultrasonic": BoolProperty(True), "ir": BoolProperty(True)}
 
 def evaluateCommand(commandList, sensor, allowCommands):
     if not type(commandList) is list:
@@ -117,16 +115,16 @@ def evaluateCommand(commandList, sensor, allowCommands):
                     util.resetNICs(command.get('nic', 'wlan'))
         
 def buttonPressed(button):
-    commandList = getCommandList("button", button, "press")
+    commandList = getCommandList(button, "onpress")
     evaluateCommand(commandList, button, services["button"].getValue())
     
 def buttonReleased(button, holdTime):
-    commandList = getCommandList("button", button, "release")
+    commandList = getCommandList(button, "onrelease")
     if commandList is not None:
         onButtonTimeEvent(button, commandList, holdTime)
         
 def buttonHold(button, holdTime):
-    commandList = getCommandList("button", button, "hold")
+    commandList = getCommandList(button, "onhold")
     if commandList is not None:
         onButtonTimeEvent(button, commandList, holdTime)
 
@@ -148,11 +146,11 @@ def onButtonTimeEvent(button, commandList, holdTime):
             evaluateCommand(command, button, services["button"].getValue())
     
 def ultrasonicChanged(ultrasonic, value):
-    commandList = getCommandList("ultrasonic", ultrasonic, "change")
+    commandList = getCommandList(ultrasonic, "onchange")
     evaluateCommand(commandList, ultrasonic, services["ultrasonic"].getValue())
     
 def irKeyPress(trigger):
-    commandList = commands.get("ir:press")
+    commandList = getCommandList(irSensor, "onpress")
     if not type(commandList) is list:
         commandList = [commandList]
     
@@ -160,13 +158,14 @@ def irKeyPress(trigger):
     for command in commandList:
         if command.get("key") == trigger:
             triggered = True
-            evaluateCommand(command, sensors["ir"], services["ir"].getValue())
+            evaluateCommand(command, irSensor, services["ir"].getValue())
             
+    # If no custom event was triggered, try to use 'default' as trigger
     if not triggered and trigger != "default":
         irKeyPress("default")
     
-def getCommandList(type, sensor, eventType):
-    return commands.get(type+":"+str(sensor.id)+":"+eventType)
+def getCommandList(sensor, eventType):
+    return events["default"].get("{}.{}".format(sensor.id, eventType))
     
 def getColorListIndex(name):
     return colorLists.get(name)["current"]
@@ -200,6 +199,7 @@ def loadConfiguration(file):
     application.loadConfig(configuration["hardware"])
     print "Loaded hardware specs"
 
+    global colorLists
     colorLists = {key: {"colors":configuration["colors"][key], "current": 0} for key in configuration["colors"]}
     print "Loaded color lists"
     
@@ -214,37 +214,29 @@ def loadConfiguration(file):
             ioutil.addExtensionCard(ExtensionCard(card['address'], card['startpin'], card['registers'], card.get("name", "unknown")))
     print "Loaded extension cards"
     
-    buttons = 0
-    ultrasonics = 0
     leds = 0
     print "Allocating input sensors..."
     for item in configuration["inputs"]:
         if item["type"] == "button":
-            buttons += 1
-            b = button.Button(iolib=ioutil, id=buttons, pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime", 1))
+            b = button.Button(iolib=ioutil, id=item["id"], pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime", 1))
             b.onPress(buttonPressed)
             b.onRelease(buttonReleased)
             b.onHold(buttonHold)
-            sensors["button:"+str(b.id)] = b
-            commands["button:"+str(b.id)+":press"] = item.get("onpress")
-            commands["button:"+str(b.id)+":release"] = item.get("onrelease")
-            commands["button:"+str(b.id)+":hold"] = item.get("onhold")
+            sensors.append(b)
         elif item["type"] == "ultrasonic":
-            ultrasonics += 1
-            usSensor = ultrasonic.UltraSonicSensor(iolib=ioutil, id=ultrasonics, trigger=item["trigger"], echo=item["echo"])
+            usSensor = ultrasonic.UltraSonicSensor(iolib=ioutil, id=item["id"], trigger=item["trigger"], echo=item["echo"])
             t = threading.Thread(target=usSensor.startContinousMeasure, name="UltraSonic "+str(usSensor.id), args=(item["minDetect"], item["maxDetect"], ultrasonicChanged, item.get("minSleep", -1), item.get("maxSleep", -1), item.get("sleepTimes", -1)))
             t.daemon = True
             t.start()
-            sensors["ultrasonic:"+str(usSensor.id)] = usSensor
-            commands["ultrasonic:"+str(usSensor.id)+":change"] = item["onchange"]
+            sensors.append(usSensor)
         elif item["type"] == "ir":
-            if sensors.get("ir") is not None:
-                raise ValueError("Only one IR controller allowed at a time")
-            irSensor = ir.InfraRedSensor(id=1)
+            global irSensor
+            if irSensor is not None:
+                raise ValueError("Only one IR receiver allowed")
+            irSensor = ir.InfraRedSensor(id="ir")
             irSensor.addListener(irKeyPress)
             irSensor.startListen()
-            sensors["ir"] = irSensor
-            commands["ir:press"] = item["onpress"]
+            sensors.append(irSensor)
         elif item["type"] == "led":
             led = LED(iolib=ioutil, id=leds, pin=item["pin"])
             if item["bind"] == "selection":
@@ -252,6 +244,11 @@ def loadConfiguration(file):
             elif item["bind"] == "service":
                 services[item["bindkey"]].addListener(led.setValue)
     print "Loaded input sensors"
+    
+    print "Registering events..."
+    global events
+    events = configuration["events"]
+    print "Events registered."
 
 def unloadConfiguration():
     # Cleanup GPIO and sensors
@@ -259,7 +256,7 @@ def unloadConfiguration():
     
     # Reset variables
     for key in services:
-        services[key] = Property(True, bool)
+        services[key] = BoolProperty(True)
     global sensors
     sensors = {}
     global commands
@@ -272,8 +269,8 @@ def unloadConfiguration():
     sound.cleanup()
     
 def cleanup():
-    for key in sensors:
-        sensors[key].terminate()
+    for sensor in sensors:
+        sensor.terminate()
     ioutil.cleanup()
 
 #####################################################
