@@ -200,10 +200,7 @@ def loadConfiguration(file):
     application.loadConfig(configuration["hardware"])
     print "Loaded hardware specs"
 
-    for key in configuration["colors"]:
-        colorLists[key] = {}
-        colorLists[key]["colors"] = configuration["colors"][key]
-        colorLists[key]["current"] = 0
+    colorLists = {key: {"colors":configuration["colors"][key], "current": 0} for key in configuration["colors"]}
     print "Loaded color lists"
     
     if configuration.get("sounds") is not None:
