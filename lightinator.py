@@ -17,6 +17,7 @@ irSensor = None
 events = {}
 colorLists = {}
 services = {"button": BoolProperty(True), "ultrasonic": BoolProperty(True), "ir": BoolProperty(True)}
+state = "default"
 
 def evaluateCommand(commandList, sensor, allowCommands):
     if not type(commandList) is list:
@@ -30,7 +31,11 @@ def evaluateCommand(commandList, sensor, allowCommands):
                 services[command.get("service")].setValue(not services[command.get("service")].getValue())
                 print("Service state ["+command.get("service")+"]: "+str(services[command.get("service")].getValue()))
             elif allowCommands:
-                if cmd == "setcolor":
+                if cmd == "setstate":
+                    global state
+                    state = command["state"]
+                    print "Using state '{}'".format(state)
+                elif cmd == "setcolor":
                     if command.get("color") is not None:
                         color = command.get("color")
                     elif command.get("colorlist") is not None:
@@ -165,7 +170,10 @@ def irKeyPress(trigger):
         irKeyPress("default")
     
 def getCommandList(sensor, eventType):
-    return events["default"].get("{}.{}".format(sensor.id, eventType))
+    eventKey = "default"
+    if events.get(state) is not None:
+        eventKey = state
+    return events[eventKey].get("{}.{}".format(sensor.id, eventType))
     
 def getColorListIndex(name):
     return colorLists.get(name)["current"]

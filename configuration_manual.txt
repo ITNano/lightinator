@@ -59,6 +59,8 @@ Commands:
 ---------
 toggleservice
 	servicename [ir, button, ultrasonic]
+setstate
+	state		[new state to use]
 setcolor
 	color <color>
 	-- or --
