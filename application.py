@@ -21,13 +21,16 @@ def loadConfig(config):
 def isValidIndex(index):
     return index >= 0 and index<len(selectedBulbs)
     
+def isSelected(index):
+    return isValidIndex(index) and selectedBulbs[index].getValue() == True
+    
 def addSelectionListener(selectingCallback, selectedCallback, index):
     if isValidIndex(index):
         selectingBulbs[index].addListener(selectingCallback)
         selectedBulbs[index].addListener(selectedCallback)
 
 def selectBulb(index):
-    if isValidIndex(index):
+    if isValidIndex(index) and not isSelected(index):
         selectingBulbs[index].setValue(True)
         connected = lights.connect_to_bulb(lights.get_bulb_by_index(index))
         selectingBulbs[index].setValue(False)
@@ -43,7 +46,10 @@ def deselectBulb(index):
         
 def toggleSelect(index):
     if isValidIndex(index):
-	    selectedBulbs[index].setValue(not selectedBulbs[index].getValue())
+        if isSelected(index):
+            deselectBulb(index)
+        else:
+            selectBulb(index)
         
 def unselectAllBulbs():
     for index in range(len(selectedBulbs)):
@@ -80,7 +86,7 @@ def deactivateBulbs():
     lights.deactivate_bulbs(getSelectedBulbList())
     
 def setColor(color):
-    lights.set_color(getSelectedBulbList(), color.get("red", 0), color.get("green", 0), color.get("blue", 0), color.get("white", 0), color.get("brightness", 0))
+    lights.set_color(getSelectedBulbList(), color.get("red", 0), color.get("green", 0), color.get("blue", 0), color.get("white", 0))
     
 def increaseBrightness(increase=0.1):
     for bulb in getSelectedBulbList():

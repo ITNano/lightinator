@@ -67,9 +67,9 @@ def bulb_sort_order(bulb):
 def activate_bulbs(bulbs):
     success = True
     for bulb in bulbs:
-        res = set_color([bulb], bulb["prev_color"][0], bulb["prev_color"][1], bulb["prev_color"][2], bulb["prev_color"][3], False)
-        res = res and set_strength(bulb["strength"])
-        success = success and res
+        resStrength = set_strength([bulb], bulb["strength"])
+        resColor = set_color([bulb], bulb["prev_color"][0], bulb["prev_color"][1], bulb["prev_color"][2], bulb["prev_color"][3], False)
+        success = success and resStrength and resColor
     return success
     
 def deactivate_bulbs(bulbs):
@@ -129,7 +129,8 @@ def connect_to_bulb(bulb):
     global sock
     network = bulb["network"]["name"]
     nic = bulb["nic"]
-    if(connections.get(nic) is None or connections[nic].get("network") != network):
+    # Reconnect if any network errors found.
+    if(connections.get(nic) is None or connections[nic].get("network") != network or not lightwifi.got_valid_connection(nic)):
         success = lightwifi.connect(network, nic)
         if success:
             sock = socket(AF_INET, SOCK_DGRAM)
@@ -162,7 +163,7 @@ def load_config(conf):
     # Init connections
     for bulb in all_bulbs:
         if connections.get(bulb["nic"]) is None:
-            lightwifi.init_lightwifi(bulb["nic"], bulb["network"]["name"])
+            lightwifi.init_lightwifi(bulb["nic"], None) #Uncomment this to autoconnect on startup :: bulb["network"]["name"])
             
 def unload_config():
     global all_bulbs

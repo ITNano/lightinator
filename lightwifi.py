@@ -69,17 +69,26 @@ def wifi_online(name, nic='wlan0'):
     return name in get_wifis(nic)
     
 def get_current_connection(nic):
-    return current_connection[nic]
+    if current_connection.get(nic) is not None:
+        return current_connection[nic]
     
 def set_current_connection(nic, name):
     global current_connection
     current_connection[nic] = name
     
 def connect(name, nic='wlan0'):
-    if get_current_connection(nic) == name:
+    curr_conn = get_current_connection(nic)
+    wifi_still_there = wait_for_wifi_init(nic, 1)
+    wifi_still_online = wifi_online(name, nic)
+    print "================ Connecting {} at {} ==========================".format(name, nic)
+    print "|| Current connection on {} is {}".format(nic, curr_conn)
+    print "|| Do I have a valid IP address to the connection? {}".format(wifi_still_there)
+    print "|| Do the Wifi still exist on my list of available ones? {}".format(wifi_still_online)
+    print "========================================================================="
+    if curr_conn == name and wifi_still_there:
         return True
         
-    if wifi_online(name, nic):
+    if wifi_still_online:
         index = light_wifis.get(name, -1)
         if index >= 0:
             template = readFile('data/tmp/wpa_supplicant_{}.conf'.format(nic))
@@ -106,17 +115,21 @@ def connect(name, nic='wlan0'):
         print("WARNING: Could not connect to WiFi - not found.")
         return False
         
-def wait_for_wifi_init(nic='wlan0'):
+def wait_for_wifi_init(nic='wlan0', max_iterations=20):
     counter = 0
-    while(counter < 20):
+    while(counter < max_iterations):
         proc = Popen("ifconfig "+nic+" | grep 'inet addr'", stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
         output, err = proc.communicate(b"")
         if proc.returncode == 0:
             return True
         else:
-            sleep(0.5)
-        counter += 1
+            counter += 1
+            if counter < max_iterations:
+                sleep(0.5)
     return False
+    
+def got_valid_connection(nic='wlan0'):
+    return wait_for_wifi_init(nic, 1)
         
 def get_priority_list(active, length):
     res = []

@@ -20,6 +20,9 @@ services = {"button": BoolProperty(True), "ultrasonic": BoolProperty(True), "ir"
 state = "default"
 
 def evaluateCommand(commandList, sensor, allowCommands):
+    if commandList is None:
+        return
+        
     if not type(commandList) is list:
         commandList = [commandList]
         
@@ -112,12 +115,13 @@ def evaluateCommand(commandList, sensor, allowCommands):
                     application.activateBulbs()
                 elif cmd == "deactivate":
                     application.deactivateBulbs()
-                elif cmd == "playsound":
-                    sound.playSound(command.get("sound"), command.get('loop'))
                 elif cmd == "stopsounds":
                     sound.stopSounds()
                 elif cmd == "restartnic":
                     util.resetNICs(command.get('nic', 'wlan'))
+                
+                if command.get("sound") is not None:
+                    sound.playSound(command.get("sound"), command.get('loop'))
         
 def buttonPressed(button):
     commandList = getCommandList(button, "onpress")
@@ -170,6 +174,7 @@ def irKeyPress(trigger):
         irKeyPress("default")
     
 def getCommandList(sensor, eventType):
+    print "{} active".format(sensor.id)
     eventKey = "default"
     if events.get(state) is not None:
         eventKey = state
@@ -222,6 +227,11 @@ def loadConfiguration(file):
             ioutil.addExtensionCard(ExtensionCard(card['address'], card['startpin'], card['registers'], card.get("name", "unknown")))
     print "Loaded extension cards"
     
+    print "Registering events..."
+    global events
+    events = configuration["events"]
+    print "Events registered."
+    
     leds = 0
     print "Allocating input sensors..."
     for item in configuration["inputs"]:
@@ -252,11 +262,6 @@ def loadConfiguration(file):
             elif item["bind"] == "service":
                 services[item["bindkey"]].addListener(led.setValue)
     print "Loaded input sensors"
-    
-    print "Registering events..."
-    global events
-    events = configuration["events"]
-    print "Events registered."
 
 def unloadConfiguration():
     # Cleanup GPIO and sensors
@@ -266,11 +271,13 @@ def unloadConfiguration():
     for key in services:
         services[key] = BoolProperty(True)
     global sensors
-    sensors = {}
-    global commands
-    commands = {}
+    sensors = []
+    global events
+    events = {}
     global colorLists
     colorLists = {}
+    global irSensor
+    irSensor = None
     
     # Clear subconfigs
     application.clearConfig()
@@ -302,6 +309,17 @@ try:
             unloadConfiguration()
             print("")
             loadConfiguration(configFile)
+        elif cmd[:7] == "trigger":
+            parts = cmd.split(" ")
+            found = False
+            for sensor in sensors:
+                if sensor.id == parts[1]:
+                    for i in range(2, len(parts)):
+                        evaluateCommand(getCommandList(sensor, parts[i]), sensor, True)
+                    found = True
+                    break
+            if not found:
+                print "Could not find device with ID "+str(parts[1])
         elif cmd[:5] == "color":
             if len(cmd.split()) == 4:
                 data = cmd.split()
