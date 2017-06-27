@@ -7,27 +7,27 @@ from property import BoolProperty
 import ioutil
 import sound
 import util
-import application
 import threading
 import json
 import math
+import time
+import msgqueue
+import traceback
 
 sensors = []
 irSensor = None
 events = {}
-colorLists = {}
 services = {"button": BoolProperty(True), "ultrasonic": BoolProperty(True), "ir": BoolProperty(True)}
 state = "default"
+connection = None
 
 def evaluateCommand(commandList, sensor, allowCommands):
     if commandList is None:
         return
         
-    if not type(commandList) is list:
-        commandList = [commandList]
-        
-    for command in commandList:
-        ## Handle command here ##
+    # Do internal command functionality
+    externalCommands = []
+    for command in util.getList(commandList):
         if command is not None:
             cmd = command.get("command")
             if cmd == "toggleservice":
@@ -38,90 +38,19 @@ def evaluateCommand(commandList, sensor, allowCommands):
                     global state
                     state = command["state"]
                     print "Using state '{}'".format(state)
-                elif cmd == "setcolor":
-                    if command.get("color") is not None:
-                        color = command.get("color")
-                    elif command.get("colorlist") is not None:
-                        mode = command.get("mode")
-                        name = command.get("colorlist")
-                        if mode == "relative":
-                            setColorListIndex(name, getColorListIndex(name) + command.get("value"))
-                        elif mode == "value":
-                            setColorListIndex(name, (len(colorLists.get(name)["colors"])-1)*sensor.getValue())
-                        elif mode == "absolute":
-                            setColorListIndex(name, command.get("value"))
-                        color = getColorFromList(name)
-                    application.setColor(color)
-                elif cmd == "setdimmer":
-                    mode = command.get("mode")
-                    if mode == "relative":
-                        application.increaseBrightness(command.get("value"))
-                    elif mode == "absolute":
-                        application.setBrightness(command.get("value"))
-                    elif mode == "value":
-                        application.setBrightness(sensor.getValue())
-                elif cmd == "setmode":
-                    mode = command.get("mode")
-                    if mode == "absolute":
-                        application.setMode(command.get("value"))
-                    elif mode == "value":
-                        application.setMode(sensor.getValue())
-                elif cmd == "setspeed":
-                    mode = command.get("mode")
-                    if mode == "absolute":
-                        application.setSpeed(command.get("value"))
-                    elif mode == "value":
-                        application.setSpeed(sensor.getValue())
-                elif cmd == "setetd":
-                    mode = command.get("mode")
-                    if mode == "absolute":
-                        application.setEffectTimeDifference(command.get("value"))
-                    elif mode == "value":
-                        application.setEffectTimeDifference(sensor.getValue())
-                elif cmd == "select":
-                    mode = command.get("mode")
-                    if mode == "relative":
-                        value = command.get("value")
-                        while(value != 0):
-                            if value < 0:
-                                application.selectPrevBulb()
-                                value += 1
-                            else:
-                                application.selectNextBulb()
-                                value -= 1
-                    elif mode == "absolute":
-                        value = command.get("value")
-                        if not type(value) is list:
-                            value = [value]
-                        for val in value:
-                            application.selectBulb(val)
-                elif cmd == "unselect":
-                    mode = command.get("mode")
-                    if mode == "absolute":
-                        value = command.get("value")
-                        if not type(value) is list:
-                            value = [value]
-                        for val in value:
-                            application.unselectBulb(val)
-                elif cmd == "toggleselect":
-                    mode = command.get("mode")
-                    if mode == "absolute":
-                        value = command.get("value")
-                        if not type(value) is list:
-                            value = [value]
-                        for val in value:
-                            application.toggleSelect(val)
-                elif cmd == "activate":
-                    application.activateBulbs()
-                elif cmd == "deactivate":
-                    application.deactivateBulbs()
-                elif cmd == "stopsounds":
-                    sound.stopSounds()
-                elif cmd == "restartnic":
-                    util.resetNICs(command.get('nic', 'wlan'))
-                
-                if command.get("sound") is not None:
-                    sound.playSound(command.get("sound"), command.get('loop'))
+                else:
+                    externalCommands.append(command)
+            else:
+                externalCommands.append(command)
+    
+    # Do external command handling (at light server)
+    if allowCommands:
+        for command in externalCommands:
+            if command.get("mode") is not None and command["mode"] == "value":
+                command["value"] = sensor.getValue()
+            if command.get("soundmode") is not None and command["soundmode"] == "value":
+                command["soundvalue"] = sensor.getValue()
+        sendCommands(externalCommands)
         
 def buttonPressed(button):
     commandList = getCommandList(button, "onpress")
@@ -179,16 +108,7 @@ def getCommandList(sensor, eventType):
     if events.get(state) is not None:
         eventKey = state
     return events[eventKey].get("{}.{}".format(sensor.id, eventType))
-    
-def getColorListIndex(name):
-    return colorLists.get(name)["current"]
-    
-def setColorListIndex(name, index):
-    colorLists.get(name)["current"] = int(math.floor(index)) % len(colorLists.get(name)["colors"])
-    
-def getColorFromList(name):
-    return colorLists.get(name)["colors"][colorLists.get(name)["current"]]
-
+   
 def byteify(input):
     if isinstance(input, dict):
         return {byteify(key): byteify(value)
@@ -199,6 +119,18 @@ def byteify(input):
         return input.encode('utf-8')
     else:
         return input
+        
+def setConnection(addr):
+    resetConnection()
+    global connection
+    connection = msgqueue.getClientConn(addr)
+    
+def resetConnection():
+    if connection is not None:
+        connection.close()
+
+def sendCommands(commands):
+    connection.send(json.dumps(util.getList(commands)))
      
 def loadConfiguration(file):     
     with open(file) as conf_file:    
@@ -208,17 +140,27 @@ def loadConfiguration(file):
     
     if configuration.get("debug") is not None and configuration["debug"].lower() == "on":
         sound.DEBUG = True
+        
+    server = configuration["server"]
+    if server["protocol"].lower() == "tcp":
+        setConnection(msgqueue.getTcpAddress(server["ip"], server["port"]))
+    elif server["protocol"].lower() == "icp":
+        setConnection(msgqueue.getIcpAddress(server["path"]))
+    print("Waiting for server connection to be established...")
+    time.sleep(2)
+    print("Connection established (probably)")
     
-    application.loadConfig(configuration["hardware"])
+    sendCommands({"command": "loadhardware", "hardware": configuration["hardware"]})
     print "Loaded hardware specs"
 
-    global colorLists
-    colorLists = {key: {"colors":configuration["colors"][key], "current": 0} for key in configuration["colors"]}
-    print "Loaded color lists"
+    if configuration.get("colors") is not None:
+        commands = [{"command": "registerreslist", "name": "colorlist_{}".format(name), "list": configuration["colors"][name], "start": 0} for name in configuration["colors"]]
+        sendCommands(commands)
+        print "Loaded color lists"
     
     if configuration.get("sounds") is not None:
-        for clip in configuration["sounds"]:
-            sound.loadSound(clip["name"], clip["path"], clip.get("start"), clip.get("end"))
+        commands = [{"command": "loadsound", "name": clip["name"], "path": clip["path"], "start": clip.get("start", 0), "end": clip.get("end", 0)} for clip in configuration["sounds"]]
+        sendCommands(commands)
         print "Loaded sounds"
 
     ioutil.init()
@@ -258,7 +200,9 @@ def loadConfiguration(file):
         elif item["type"] == "led":
             led = LED(iolib=ioutil, id=leds, pin=item["pin"])
             if item["bind"] == "selection":
-                application.addSelectionListener(led.blink, led.setValue, item["bindkey"])
+                # FIXME
+                # application.addSelectionListener(led.blink, led.setValue, item["bindkey"])
+                pass
             elif item["bind"] == "service":
                 services[item["bindkey"]].addListener(led.setValue)
     print "Loaded input sensors"
@@ -280,7 +224,7 @@ def unloadConfiguration():
     irSensor = None
     
     # Clear subconfigs
-    application.clearConfig()
+    sendCommands({"command": "clearconfig"})
     sound.cleanup()
     
 def cleanup():
@@ -291,41 +235,41 @@ def cleanup():
 #####################################################
 # ------------------ MAIN LOOP -------------------- #
 #####################################################
-try:
+#try:
     # Main loop to keep program running
-    configFile = "conf/lightinator.conf"
-    loadConfiguration(configFile)
-    while True:
-        cmd = raw_input()
-        if cmd == 'end':
-            print("Ending program")
-            unloadConfiguration()
-            break
-        elif cmd == 'selection':
-            print(application.getSelectedBulbList())
-        elif cmd == 'restart':
-            evaluateCommand([{'command':'restartnic'}], None, True)
-        elif cmd == 'reload':
-            unloadConfiguration()
-            print("")
-            loadConfiguration(configFile)
-        elif cmd[:7] == "trigger":
-            parts = cmd.split(" ")
-            found = False
-            for sensor in sensors:
-                if sensor.id == parts[1]:
-                    for i in range(2, len(parts)):
-                        evaluateCommand(getCommandList(sensor, parts[i]), sensor, True)
-                    found = True
-                    break
-            if not found:
-                print "Could not find device with ID "+str(parts[1])
-        elif cmd[:5] == "color":
-            if len(cmd.split()) == 4:
-                data = cmd.split()
-                application.setColor({"red":int(data[1]), "green":int(data[2]), "blue":int(data[3])})
-except Exception as e:
-    print("Caught an exception during runtime, shutting down. Error as given below.")
-    cleanup()
-    raise e
+configFile = "conf/lightinator.conf"
+loadConfiguration(configFile)
+while True:
+    cmd = raw_input()
+    if cmd == 'end':
+        print("Ending program")
+        unloadConfiguration()
+        break
+    elif cmd == 'selection':
+        print(application.getSelectedBulbList())
+    elif cmd == 'restart':
+        evaluateCommand([{'command':'restartnic'}], None, True)
+    elif cmd == 'reload':
+        unloadConfiguration()
+        print("")
+        loadConfiguration(configFile)
+    elif cmd[:7] == "trigger":
+        parts = cmd.split(" ")
+        found = False
+        for sensor in sensors:
+            if sensor.id == parts[1]:
+                for i in range(2, len(parts)):
+                    evaluateCommand(getCommandList(sensor, parts[i]), sensor, True)
+                found = True
+                break
+        if not found:
+            print "Could not find device with ID "+str(parts[1])
+    elif cmd[:5] == "color":
+        if len(cmd.split()) == 4:
+            data = cmd.split()
+            sendCommands({"command": "setcolor", "color":{"red":int(data[1]), "green":int(data[2]), "blue":int(data[3])}})
+#except Exception as e:
+#    print("Caught an exception during runtime, shutting down. Error as given below.")
+#    cleanup()
+#    traceback.print_exc()
     

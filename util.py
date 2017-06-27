@@ -4,6 +4,7 @@ import psutil
 import logging
 import subprocess
 import netifaces
+import threading
 
 def resetNICs(nicStart):
     # Reset interfaces that start with wlan
@@ -44,6 +45,16 @@ def which(program):
         program_path = os.path.join(envdir, program)
         if os.path.isfile(program_path) and os.access(program_path, os.X_OK):
             return program_path
+            
+def runDaemon(target, args=None):
+    t = threading.Thread(target=target, args=args)
+    t.daemon = True
+    t.start()
+    
+def getList(data):
+    if not type(data) is list:
+        return [data]
+    return data
             
 def writeFile(file, contents):
     with open(file, 'w') as f:
