@@ -13,6 +13,7 @@ import math
 import time
 import msgqueue
 import traceback
+import logging
 
 sensors = []
 irSensor = None
@@ -32,12 +33,12 @@ def evaluateCommand(commandList, sensor, allowCommands):
             cmd = command.get("command")
             if cmd == "toggleservice":
                 services[command.get("service")].setValue(not services[command.get("service")].getValue())
-                print("Service state ["+command.get("service")+"]: "+str(services[command.get("service")].getValue()))
+                logging.info("Service state ["+command.get("service")+"]: "+str(services[command.get("service")].getValue()))
             elif allowCommands:
                 if cmd == "setstate":
                     global state
                     state = command["state"]
-                    print "Using state '{}'".format(state)
+                    logging.info("Using state '{}'".format(state))
                 else:
                     externalCommands.append(command)
             else:
@@ -103,7 +104,7 @@ def irKeyPress(trigger):
         irKeyPress("default")
     
 def getCommandList(sensor, eventType):
-    print "{} active".format(sensor.id)
+    logging.debug("{} active".format(sensor.id))
     eventKey = "default"
     if events.get(state) is not None:
         eventKey = state
@@ -136,7 +137,7 @@ def loadConfiguration(file):
     with open(file) as conf_file:    
         configuration = byteify(json.load(conf_file))
         
-    print("Using configuration by %s from %s (version %s)" % (configuration["author"], configuration["date"], configuration["version"]))
+    logging.info("Using configuration by {0} from {1} (version {2})".format(configuration["author"], configuration["date"], configuration["version"]))
     
     if configuration.get("debug") is not None and configuration["debug"].lower() == "on":
         sound.DEBUG = True
@@ -146,36 +147,36 @@ def loadConfiguration(file):
         setConnection(msgqueue.getTcpAddress(server["ip"], server["port"]))
     elif server["protocol"].lower() == "icp":
         setConnection(msgqueue.getIcpAddress(server["path"]))
-    print("Waiting for server connection to be established...")
+    logging.info("Waiting for server connection to be established...")
     time.sleep(2)
-    print("Connection established (probably)")
+    logging.debug("Connection established (probably)")
     
     sendCommands({"command": "loadhardware", "hardware": configuration["hardware"]})
-    print "Loaded hardware specs"
+    logging.info("Loaded hardware specs")
 
     if configuration.get("colors") is not None:
         commands = [{"command": "registerreslist", "name": "colorlist_{}".format(name), "list": configuration["colors"][name], "start": 0} for name in configuration["colors"]]
         sendCommands(commands)
-        print "Loaded color lists"
+        logging.info("Loaded color lists")
     
     if configuration.get("sounds") is not None:
         commands = [{"command": "loadsound", "name": clip["name"], "path": clip["path"], "start": clip.get("start", 0), "end": clip.get("end", 0)} for clip in configuration["sounds"]]
         sendCommands(commands)
-        print "Loaded sounds"
+        logging.info("Loaded sounds")
 
     ioutil.init()
     if configuration.get("extensioncards") is not None:
         for card in configuration["extensioncards"]:
             ioutil.addExtensionCard(ExtensionCard(card['address'], card['startpin'], card['registers'], card.get("name", "unknown")))
-    print "Loaded extension cards"
+    logging.info("Loaded extension cards")
     
-    print "Registering events..."
+    logging.debug("Registering events...")
     global events
     events = configuration["events"]
-    print "Events registered."
+    logging.info("Events registered.")
     
     leds = 0
-    print "Allocating input sensors..."
+    logging.info("Allocating input sensors...")
     for item in configuration["inputs"]:
         if item["type"] == "button":
             b = button.Button(iolib=ioutil, id=item["id"], pin=item["pin"], power=item.get("power"), holdInterval=item.get("holdTime", 1))
@@ -205,7 +206,7 @@ def loadConfiguration(file):
                 pass
             elif item["bind"] == "service":
                 services[item["bindkey"]].addListener(led.setValue)
-    print "Loaded input sensors"
+    logging.info("Loaded input sensors")
 
 def unloadConfiguration():
     # Cleanup GPIO and sensors
@@ -242,7 +243,7 @@ loadConfiguration(configFile)
 while True:
     cmd = raw_input()
     if cmd == 'end':
-        print("Ending program")
+        logging.info("Ending program")
         unloadConfiguration()
         break
     elif cmd == 'selection':
@@ -263,13 +264,13 @@ while True:
                 found = True
                 break
         if not found:
-            print "Could not find device with ID "+str(parts[1])
+            logging.debug("Could not find device with ID {}".format(parts[1]))
     elif cmd[:5] == "color":
         if len(cmd.split()) == 4:
             data = cmd.split()
             sendCommands({"command": "setcolor", "color":{"red":int(data[1]), "green":int(data[2]), "blue":int(data[3])}})
 #except Exception as e:
-#    print("Caught an exception during runtime, shutting down. Error as given below.")
+#    logging.error("Caught an exception during runtime, shutting down. Error as given below.")
 #    cleanup()
 #    traceback.print_exc()
     

@@ -1,6 +1,7 @@
 from hardware import Hardware
 import pylirc, time
 import threading
+import logging
 
 DEBUG = False
 UPDATE_FREQ = 100
@@ -13,12 +14,19 @@ class InfraRedSensor(Hardware):
         self.listening = False
         self.listeners = []
         self.closed = False
-        if not pylirc.init("pylirc", "conf/lirc_conf", False):
-            print("Warning: Could not load IR dependencies")
+        if not self.initPylirc():
+            logging.warning("Warning: Could not load IR dependencies")
         else:
             t = threading.Thread(target=self.listenLoop, name="IR Thread")
             t.daemon = True
             t.start()
+            
+    def initPylirc(self):
+        try:
+            pylirc.init("pylirc", "./conf/lircrc", False)
+            return True
+        except:
+            return False
             
     def getValue(self):
         return self.value
@@ -55,19 +63,19 @@ class InfraRedSensor(Hardware):
 
 if DEBUG:
     def gotIREvent(event):
-        print(event)
+        logging.debug(event)
 
     irSensor = InfraRedSensor()
     irSensor.addListener(gotIREvent)
     irSensor.startListen()
 
-    print("All started, listening for commands")
+    logging.debug("All started, listening for commands")
     while True:
         cmd = raw_input("Enter command: ")
         if cmd == "exit":
-            print("Quitting....")
+            logging.debug("Quitting....")
             irSensor.removeListener(gotIREvent)
             irSensor.destroy()
             break
         else:
-            print("Unknown command: "+cmd)
+            logging.debug("Unknown command: "+cmd)

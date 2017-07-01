@@ -51,7 +51,7 @@ if(pylirc.init("pylirc", "../conf/lirc_conf", blocking)):
 
       # Very intuitive indeed
       if(not blocking):
-         print "."
+         print(".")
 
          # Delay...
          time.sleep(1)
@@ -66,7 +66,7 @@ if(pylirc.init("pylirc", "../conf/lirc_conf", blocking)):
          # Print all the configs...
          for (code) in s:
          
-            print "Command: %s, Repeat: %d" % (code["config"], code["repeat"])
+            print("Command: {0}, Repeat: {1}".format(code["config"], code["repeat"]))
             
             if(code["config"] == "blocking"):
                blocking = 1

@@ -2,6 +2,7 @@ import json
 from socket import *
 import netifaces
 import lightwifi
+import logging
 from time import sleep
 
 PYTHON3 = False
@@ -144,14 +145,14 @@ def connect_to_bulb(bulb):
         return True
     
 def send_message(content, addr, port, retransmits=3):
-    #print ''.join('{:02x} '.format(x) for x in content)
+    #logging.debug(''.join('{:02x} '.format(x) for x in content))
     if sock is not None:
         for i in range(0, retransmits):
             sock.sendto(content, (addr, port))
             if i < retransmits-1:
                 sleep(0.1)
     else:
-        print("Error: Uninitialized socket!")
+        logging.warning("Error: Uninitialized socket!")
     
 def load_config(conf):
     for bulb in conf["bulbs"]:
@@ -173,7 +174,7 @@ def unload_config():
 def get_network(bulbName, custom, default):
     if custom is None:
         if default is None:
-            print "WARNING: No available network description found. Please check configuration!"
+            logging.warning("WARNING: No available network description found. Please check configuration!")
         custom = {}
         
     network = {}

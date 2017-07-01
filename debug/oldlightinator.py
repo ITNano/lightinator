@@ -3,6 +3,7 @@ import ultrasonic
 import ir
 import application
 import threading
+import logging
 
 # Init sensor
 usSensor1 = ultrasonic.UltraSonicSensor(id=1, trigger=23, echo=24)
@@ -34,7 +35,7 @@ def handleButtonPress(button):
         application.setColor(color[0], color[1], color[2])
 
 def handleButtonRelease(button, pressTime):
-    print('Released button with id ',button.id)
+    logging.info('Released button with id ',button.id)
 
 buttonSel1.onPress(handleButtonPress)
 buttonSel1.onRelease(handleButtonRelease)
@@ -90,7 +91,7 @@ irSensor.startListen()
 while True:
     cmd = raw_input()
     if cmd == 'end':
-        print("Ending program")
+        logging.info("Ending program")
         usSensor1.stopContinousMeasure()
         ultrasonic.cleanup()
         irSensor.removeListener(handleIREvent)

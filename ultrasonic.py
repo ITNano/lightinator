@@ -1,5 +1,6 @@
 from hardware import Hardware
 import time
+import logging
 
 DEBUG = False
 
@@ -19,7 +20,7 @@ class UltraSonicSensor(Hardware):
         self.io.setDirection(self.echo, self.io.IN)
 
         self.io.writePin(self.trigger, self.io.OFF)
-        print("Initializing hypersonic sensor, please wait.")
+        logging.debug("Initializing hypersonic sensor, please wait.")
         time.sleep(2)
 
     def doMeasure(self):
@@ -64,12 +65,10 @@ class UltraSonicSensor(Hardware):
             if measure > maxSleepDistance or measure < minSleepDistance:
                 sleepCounter += 1
                 if sleepCounter > allowedSleepTimes:
-                    if DEBUG:
-                        print('ContinousMeasure: Measurement not in boundaries (',measure,'cm). Waiting 2s')
+                    logging.debug('ContinousMeasure: Measurement not in boundaries ({}cm). Waiting 2s'.format(measure))
                     time.sleep(2)
                 else:
-                    if DEBUG:
-                        print('Increasing sleep counter to ',sleepCounter)
+                    logging.debug('Increasing sleep counter to {}'.format(sleepCounter))
                     time.sleep(0.01)
             else:
                 if self.continousMeasure:

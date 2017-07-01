@@ -3,6 +3,7 @@ from tempfile import NamedTemporaryFile
 import os
 import subprocess
 import util
+import logging
 
 
 ############################# --------------------- Utils ------------------------ #################################
@@ -34,6 +35,7 @@ def getInMs(time):
         return 1000*time
 
 def loadSound(name, filename, start=0, end=0):
+    logging.debug("Sound: Loading sound {}".format(name))
     if sounds.get(name) is None:
         sound = AudioSegment.from_file(filename, getType(filename))
         sound = sound[getInMs(start):getInMs(end)]
@@ -41,9 +43,10 @@ def loadSound(name, filename, start=0, end=0):
             sound.export(f.name, "wav")
             sounds[name] = f
     else:
-        print "Warning: Duplicate sound ID - '"+name+"'"
+        logging.warning("Warning: Duplicate sound ID - '{}'".format(name))
     
 def playSound(name, loop=None):
+    logging.debug("Sound: Playing sound {}".format(name))
     file = sounds.get(name)
     if file is not None:
         global playProcess

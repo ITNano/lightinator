@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE, call
 from time import sleep
 from util import *
+import logging
 
 light_wifis = {}
 current_connection = {}
@@ -46,9 +47,9 @@ def init_lightwifi(nic='wlan0', network=None):
     output, err = proc.communicate(b"")
     if proc.returncode == 0:
         set_current_connection(nic, str(output.decode("utf-8").strip()))
-        print(nic+" connected to : "+get_current_connection(nic))
+        logging.debug(nic+" connected to : "+get_current_connection(nic))
     else:
-        print("No previous connection found")
+        logging.debug("No previous connection found")
     if network is not None:
         connect(network, nic)
 
@@ -62,7 +63,7 @@ def get_wifis(nic='wlan0'):
             wifis.append(wifi.strip())
         return wifis
     else:
-        print("WARNING: Got an error for the WiFi detection command!")
+        logging.warning("WARNING: Got an error for the WiFi detection command!")
         return []
         
 def wifi_online(name, nic='wlan0'):
@@ -80,11 +81,11 @@ def connect(name, nic='wlan0'):
     curr_conn = get_current_connection(nic)
     wifi_still_there = wait_for_wifi_init(nic, 1)
     wifi_still_online = wifi_online(name, nic)
-    print "================ Connecting {} at {} ==========================".format(name, nic)
-    print "|| Current connection on {} is {}".format(nic, curr_conn)
-    print "|| Do I have a valid IP address to the connection? {}".format(wifi_still_there)
-    print "|| Do the Wifi still exist on my list of available ones? {}".format(wifi_still_online)
-    print "========================================================================="
+    logging.debug("================ Connecting {} at {} ==========================".format(name, nic))
+    logging.debug("|| Current connection on {} is {}".format(nic, curr_conn))
+    logging.debug("|| Do I have a valid IP address to the connection? {}".format(wifi_still_there))
+    logging.debug("|| Do the Wifi still exist on my list of available ones? {}".format(wifi_still_online))
+    logging.debug("=========================================================================")
     if curr_conn == name and wifi_still_there:
         return True
         
@@ -100,19 +101,19 @@ def connect(name, nic='wlan0'):
                 res = wait_for_wifi_init(nic)
                 if not res:
                     set_current_connection(nic, None)
-                    print("Warning: WiFi connection might not be ready.")
+                    logging.warning("Warning: WiFi connection might not be ready.")
                 else:
                     set_current_connection(nic, name)
                     # Do some extra sleeping...
                     sleep(0.5)
                 return res
             else:
-                print("Could not add WiFi configuration. Did you really run with sudo?")
+                logging.warning("Could not add WiFi configuration. Did you really run with sudo?")
                 return False
         else:
             raise ValueError("The given WiFi has not been configured in advance: " + name)
     else:
-        print("WARNING: Could not connect to WiFi - not found.")
+        logging.warning("WARNING: Could not connect to WiFi - not found.")
         return False
         
 def wait_for_wifi_init(nic='wlan0', max_iterations=20):

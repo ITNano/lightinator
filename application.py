@@ -6,6 +6,7 @@ from property import Property,BoolProperty
 import resourcelist
 import msgqueue
 import sys
+import logging
 
 
 selectedBulbs = resourcelist.MultiChoiceResourceList(data=[])
@@ -21,7 +22,7 @@ def loadConfig(config):
     selectedBulbs = resourcelist.MultiChoiceResourceList(data=lights.get_all_bulbs())
     
 def receiveCommand(src, commands):
-    print "Got a command: {}".format(commands)
+    logging.debug("Got a command: {}".format(commands))
     handleCommands(json.loads(commands))
     
 def handleCommands(commandList):
@@ -94,7 +95,7 @@ def handleCommands(commandList):
                 soundlist.select(command.get("soundmode"), command.get("soundvalue"))
                 sound.playSound(soundlist.getSelectedData(), command.get('loop'))
                 
-    print("All commands has now been handled")
+    logging.debug("All commands has now been handled")
     
 def isValidIndex(index):
     return index >= 0 and index<selectedBulbs.size()
@@ -148,5 +149,7 @@ if __name__ == "__main__":
             cmd = raw_input()
             if cmd == "end":
                 break
+            elif cmd == "selection": 
+                print("{}".format([bulb["name"] for bulb in selectedBulbs.getSelectedData()]))
     else:
         print("Invalid call. Usage: python application.py [protocol] [address or path]")

@@ -1,8 +1,9 @@
 import traceback
 import sys
+import logging
 
 def dumpThreads():
-    print "\n*** STACKTRACE - START ***\n"
+    logging.debug("\n*** STACKTRACE - START ***\n")
     code = []
     for threadId, stack in sys._current_frames().items():
         code.append("\n# ThreadID: %s" % threadId)
@@ -12,5 +13,5 @@ def dumpThreads():
                 code.append(" %s" % (line.strip()))
 
     for line in code:
-        print line
-    print "\n*** STACKTRACE - END ***\n"
+        logging.debug(line)
+    logging.debug("\n*** STACKTRACE - END ***\n")

@@ -1,17 +1,19 @@
 import RPi.GPIO as GPIO
 import time
+import logging
+
 GPIO.setmode(GPIO.BCM)
 
 TRIG = 23 
 ECHO = 24
 
-print "Distance Measurement In Progress"
+logging.info("Distance Measurement In Progress")
 
 GPIO.setup(TRIG,GPIO.OUT)
 GPIO.setup(ECHO,GPIO.IN)
 
 GPIO.output(TRIG, False)
-print "Waiting For Sensor To Settle"
+logging.info("Waiting For Sensor To Settle")
 time.sleep(2)
 
 for i in range(0, 20):
@@ -29,7 +31,7 @@ for i in range(0, 20):
     distance = pulse_duration * 17150
     distance = round(distance, 2)
 
-    print "Distance:",distance,"cm"
+    logging.info("Distance: {}cm".format(distance))
     time.sleep(0.5)
 
 GPIO.cleanup()

@@ -1,4 +1,4 @@
-
+import logging
 import RPi.GPIO as GPIO
 from i2c import ExtensionCard
 
@@ -33,7 +33,7 @@ def setDirection(pin, dir, pull_up_down=None):
             GPIO.setup(pin, dir)
         else:
             GPIO.setup(pin, dir, pull_up_down=pull_up_down)
-    print "Pin "+str(pin)+"\t"+cardname+"\t"+("\t"*int(5/len(cardname)))+"DIR="+["OUT", "IN"][dir]          # Adds extra tab if cardname < 5chars
+    logging.debug("Pin {0}\t{1}\t{2}DIR={3}".format(pin, cardname, "\t"*int(5/len(cardname)), ["OUT", "IN"][dir]))       # Adds extra tab if cardname < 5chars
     
 def writePin(pin, value):
     card = getExtensionCard(pin)
@@ -52,7 +52,7 @@ def readPin(pin):
 def registerForChangeEvent(pin, callback):
     card = getExtensionCard(pin)
     if card is not None:
-        print("WARNING: Event detection not yet implemented for extension cards!")
+        logging.warning("WARNING: Event detection not yet implemented for extension cards!")
     else:
         GPIO.add_event_detect(pin, GPIO.BOTH)
         GPIO.add_event_callback(pin, callback)
@@ -60,7 +60,7 @@ def registerForChangeEvent(pin, callback):
 def unregisterFromChangeEvent(pin):
     card = getExtensionCard(pin)
     if card is not None:
-        print("WARNING: Event detection not yet implemented for extension cards!")
+        logging.warning("WARNING: Event detection not yet implemented for extension cards!")
     else:
         GPIO.remove_event_detect(pin)
         

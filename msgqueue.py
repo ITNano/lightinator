@@ -1,6 +1,7 @@
 import zmq
 import sys
 from util import runDaemon
+import logging
 
 runningServers = {}
     
@@ -16,7 +17,7 @@ def runServer(addr, callback, preprocessor=None, useMainThread=False):
                     msg = preprocessor(msg)
                 runDaemon(target=callback, args=(addr, msg,))
             except:
-                print("WARNING: Got an exception while reading server messages!")
+                logging.warning("WARNING: Got an exception while reading server messages!")
         conn.close()
         
     if useMainThread:
@@ -28,16 +29,16 @@ def stopServer(addr):
     runningServers[addr] = False
     
 def getServerConn(addr):
-    print("Opening server @ {0}".format(addr))
+    logging.debug("Opening server @ {0}".format(addr))
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
     subscriber.bind(addr)
     subscriber.setsockopt(zmq.SUBSCRIBE, '')
-    print("Server open @ {0}".format(addr))
+    logging.info("Server open @ {0}".format(addr))
     return subscriber
     
 def getClientConn(addr):
-    print("Connecting to {0}".format(addr))
+    logging.debug("Connecting to {0}".format(addr))
     context = zmq.Context()
     publisher = context.socket(zmq.PUB)
     publisher.connect(addr)

@@ -1,22 +1,23 @@
 import zmq
 import sys
 import threading
+import logging
 
 def getServerConn(addr):
-    print("Opening server @ {0}".format(addr))
+    logging.info("Opening server @ {0}".format(addr))
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
     subscriber.bind(addr)
     subscriber.setsockopt(zmq.SUBSCRIBE, '')
-    print("Server open @ {0}".format(addr))
+    logging.info("Server open @ {0}".format(addr))
     return subscriber
     
 def getClientConn(addr):
-    print("Connecting to {0}".format(addr))
+    logging.info("Connecting to {0}".format(addr))
     context = zmq.Context()
     publisher = context.socket(zmq.PUB)
     publisher.connect(addr)
-    print("Connection established")
+    logging.info("Connection established")
     return publisher
     
 def getAddress(proto, name):
@@ -40,10 +41,10 @@ def runEchoClient(addr):
 def runEchoServer(addr):
     subscriber = getServerConn(addr)
     while True:
-        print subscriber.recv()
+        print(subscriber.recv())
         
 def printUsage():
-    print "Usage: python mqtest.py [server|client] [proto] [address]"
+    logging.error("Usage: python mqtest.py [server|client] [proto] [address]")
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:
@@ -52,8 +53,8 @@ if __name__ == "__main__":
         elif sys.argv[1] == "client":
             runEchoClient(getAddress(sys.argv[2], sys.argv[3]))
         else:
-            print "Invalid argument: {0}".format(sys.argv[1])
+            logging.error("Invalid argument: {0}".format(sys.argv[1]))
             printUsage()
     else:
-        print "Invalid number of arguments"
+        logging.error("Invalid number of arguments")
         printUsage()
