@@ -1,16 +1,25 @@
-import logging
+from sensor import Sensor
 
-class Button(object):
+class Button(Sensor):
 
-    def __init__(self, id, pin, power, holdInterval=1):
-        self.logger = logging.getLogger(__name__)
-        self.id = id
+    def __init__(self, id, pin, power=0, holdInterval=1):
+        Sensor.__init__(self, id)
         self.pin = pin
         self.power = power
         self.holdInterval = holdInterval
-        
-    def activate(self):
-        self.logger.debug("Activate button")
-        
-    def deactivate(self):
-        self.logger.debug("Deactivate button")
+        self.holdTime = 0
+    
+    def check_valid(self, event_name, command):
+        success = True
+        if event_name == "hold":
+            if command.get("holdMinInclusive") is not None:
+                success = success and self.holdTime >= float(command["holdMinInclusive"])
+            elif command.get("holdMin") is not None:
+                success = success and self.holdTime > float(command["holdMin"])
+            elif command.get("holdMaxInclusive") is not None:
+                success = success and self.holdTime <= float(command["holdMaxInclusive"])
+            elif command.get("holdMax") is not None:
+                success = success and self.holdTime < float(command["holdMax"])
+            
+        return success
+                
