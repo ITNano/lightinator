@@ -28,6 +28,7 @@ def set_color(color):
     pass
     
 def set_color_by_list(list, index):
+    print("Setting color list with list: ", list, " and index: ", index)
     pass
     
 def set_color_by_list_relative(list, change):
@@ -43,6 +44,9 @@ def dec_dimmer(decrease):
     pass
     
 def set_mode(mode):
+    pass
+    
+def set_speed(increase):
     pass
     
 def inc_speed(increase):
