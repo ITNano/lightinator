@@ -2,6 +2,7 @@ import logging
 import util
 import projectpath
 
+logger = logging.getLogger(__name__)
 data = {}
 VARIABLE_START_INDICATOR = "{"
 VARIABLE_END_INDICATOR = "}"
@@ -10,8 +11,25 @@ VALUE_INDICATOR = VARIABLE_START_INDICATOR+"VALUE"+VARIABLE_END_INDICATOR
 def setup_events(variables, events):
     data["variables"] = variables
     data["events"] = events
+    data["disabled_devices"] = []
     data["state"] = "default"
-    data["func"] = util.load_folder_modules(projectpath.FUNC_PATH)
+    
+    def accept(name, mod):
+        return hasattr(mod, "get_functions") and callable(getattr(mod, "get_functions"))
+    modules = util.load_folder_modules(projectpath.FUNC_PATH, accept)
+    data["func"] = {}
+    for name, module in modules.items():
+        data["func"][name] = module.get_functions()
+    data["func"]["event"] = {"setstate": set_state, "togglesensor": toggle_sensor}
+    
+def set_state(state):
+    data["state"] = state
+    
+def toggle_sensor(sensor):
+    if sensor in data["disabled_devices"]:
+        data["disabled_devices"].remove(sensor)
+    else:
+        data["disabled_devices"].append(sensor)
     
 def is_variable_reference(obj):
     return type(obj) == str and obj[:1] == VARIABLE_START_INDICATOR and obj[-1:] == VARIABLE_END_INDICATOR
@@ -59,6 +77,7 @@ def command_exists(trigger):
     
     
 def announce_event(sensor, event_name):
+    disabled = sensor.get_id() in data["disabled_devices"]
     trigger = sensor.get_id()+"."+event_name
     
     # use default actions if specific are not specified for this state
@@ -71,11 +90,19 @@ def announce_event(sensor, event_name):
         commands = [commands]
     for command in commands:
         prepared_command = prepare_command(command, sensor)
-        if sensor.check_valid(event_name, prepared_command):
+        if (not disabled or command["command"] == "togglesensor") and sensor.check_valid(event_name, prepared_command):
             run_command(prepared_command)
+        else:
+            logger.debug("Stopped command from being run")
         
         
 def run_command(command):
-    print("Running command : ", command)
-
+    logger.info("Running command : %s", command)
+    try:
+        module = data["func"][command["module"]]
+        func = module[command["command"]]
+        params = {key:value for (key, value) in command.items() if not key == "module" and not key == "command"}
+        func(**params)
+    except:
+        logger.warning("Could not run function", exc_info=True)
 
