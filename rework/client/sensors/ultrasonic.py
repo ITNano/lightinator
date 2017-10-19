@@ -3,8 +3,8 @@ from sensor import Sensor
 
 class UltraSonic(Sensor):
 
-    def __init__(self, event_engine, id, trigger, echo,  minDetect=0, maxDetect=1000, minSleep=-1, maxSleep=-1, allowedMisreads=3):
-        Sensor.__init__(self, event_engine, id)
+    def __init__(self, id, trigger, echo,  minDetect=0, maxDetect=1000, minSleep=-1, maxSleep=-1, allowedMisreads=3):
+        Sensor.__init__(self, id)
         self.trigger = trigger 
         self.echo = echo
         self.continousMeasure = False

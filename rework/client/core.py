@@ -26,8 +26,8 @@ class Core(object):
         try:
             sensor_mod = self.sensor_modules[sensor_type]
             sensor_class = [obj for (name, obj) in inspect.getmembers(sensor_mod) if name.lower() == sensor_type.lower()][0]
-            args["event_engine"] = event_engine
             instance = sensor_class(**args)
+            instance.set_publisher(event_engine)
             self.sensors.append(instance)
             self.logger.info("Sensor of type %s added with ID %s", sensor_type, instance.get_id())
             return instance

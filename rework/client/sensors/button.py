@@ -3,8 +3,8 @@ import event
 
 class Button(Sensor):
 
-    def __init__(self, event_engine, id, pin, power=0, holdInterval=1):
-        Sensor.__init__(self, event_engine, id)
+    def __init__(self, id, pin, power=0, holdInterval=1):
+        Sensor.__init__(self, id)
         self.pin = pin
         self.power = power
         self.holdInterval = holdInterval

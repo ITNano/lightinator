@@ -2,10 +2,12 @@ import logging
 
 class Sensor(object):
 
-    def __init__(self, event_engine, id):
+    def __init__(self, id):
         self.logger = logging.getLogger(__name__)
-        self.event_engine = event_engine
         self.id = id
+        
+    def set_publisher(self, event_engine):
+        self.publisher = event_engine
         
     def get_id(self):
         return self.id
@@ -14,7 +16,7 @@ class Sensor(object):
         return 0
         
     def push_event(self, event_name):
-        self.event_engine.push_event(self, event_name)
+        self.publisher.push_event(self, event_name)
         
     def check_valid(self, event_name, command):
         return True
