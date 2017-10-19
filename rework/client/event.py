@@ -1,6 +1,7 @@
 import logging
 import util
 import projectpath
+import re
 
 VARIABLE_START_INDICATOR = "{"
 VARIABLE_END_INDICATOR = "}"
@@ -13,17 +14,33 @@ class EventEngine(object):
         self.variables = variables
         self.events = events
         self.disabled_devices = []
+        self.prop_listeners = []
         self.state = "default"
         
         # Load generic functionality modules
         def accept(name, mod):
-            return hasattr(mod, "get_functions") and callable(getattr(mod, "get_functions"))
+            return hasattr(mod, "get_functions") and hasattr(mod, "set_publisher")
         modules = util.load_folder_modules(projectpath.FUNC_PATH, accept)
         self.modules = {}
         for name, module in modules.items():
             self.modules[name] = module.get_functions()
+            module.set_publisher(self)
         self.modules["event"] = {"setstate": self.set_state, "togglesensor": self.toggle_sensor}
         
+    # -------------------- Property listeners ----------------------- #    
+    def add_property_listener(self, property, listener):
+        self.prop_listeners.append((property, listener))
+        
+    def remove_property_listener(self, property, listener):
+        self.prop_listeners.remove((property, listener))
+            
+    def update_value(self, property, value):
+        for (prop, listener) in self.prop_listeners:
+            if re.search(prop, property, re.IGNORECASE):
+                listener(property, value)
+        
+        
+    # ------------------ Internal exposed functions ----------------- #    
     def set_state(self, state):
         data["state"] = state
         
@@ -33,6 +50,7 @@ class EventEngine(object):
         else:
             self.disabled_devices.append(sensor)
         
+    # ------------------ Execute command on event ------------------- #    
     def is_variable_reference(self, obj):
         return type(obj) == str and obj[:1] == VARIABLE_START_INDICATOR and obj[-1:] == VARIABLE_END_INDICATOR
         

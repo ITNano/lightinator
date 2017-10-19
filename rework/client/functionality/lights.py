@@ -1,5 +1,7 @@
 
+publisher = None 
 
+# --------------------- Compulsory functions ----------------------- #
 def get_functions():
 	return {
 			"setcolor":		    set_color,
@@ -24,6 +26,17 @@ def get_functions():
 			"deactivate":	    deactivate_bulbs
 	}
     
+def set_publisher(event_engine):
+    global publisher
+    publisher = event_engine
+    
+    
+# -------------------------- Helper functions ---------------------------- #
+def send_value_update(property, value):
+    publisher.update_value(property, value)
+    
+
+# ------------------- Implementation specific functions ------------------ #
 def set_color(color):
     pass
     
@@ -32,6 +45,7 @@ def set_color_by_list(list, index):
     pass
     
 def set_color_by_list_relative(list, change):
+    send_value_update("lights.selected.0", 1)
     pass
     
 def set_dimmer(value):
