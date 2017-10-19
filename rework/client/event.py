@@ -28,10 +28,10 @@ class EventEngine(object):
         data["state"] = state
         
     def toggle_sensor(self, sensor):
-        if sensor in data["disabled_devices"]:
-            data["disabled_devices"].remove(sensor)
+        if sensor in self.disabled_devices:
+            self.disabled_devices.remove(sensor)
         else:
-            data["disabled_devices"].append(sensor)
+            self.disabled_devices.append(sensor)
         
     def is_variable_reference(self, obj):
         return type(obj) == str and obj[:1] == VARIABLE_START_INDICATOR and obj[-1:] == VARIABLE_END_INDICATOR
