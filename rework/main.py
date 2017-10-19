@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # Startup sequence
     event_engine = EventEngine(conf.get_conf('variables'), conf.get_conf('events'))
     core = Core()
-    core.setup_hardware(conf.get_conf('sensors'), conf.get_conf('statusindicators'), event_engine)
+    core.setup_hardware(conf.get_conf('extensioncards'), conf.get_conf('sensors'), conf.get_conf('statusindicators'), event_engine)
     core.activate_sensors()
     
     # Available for commands

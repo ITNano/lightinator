@@ -112,17 +112,17 @@ class EventEngine(object):
         for command in commands:
             prepared_command = self.prepare_command(command, sensor)
             if (not disabled or command["command"] == "togglesensor") and sensor.check_valid(event_name, prepared_command):
-                self.run_command(prepared_command)
+                self.run_command(prepared_command, sensor)
             else:
                 self.logger.debug("Stopped command from being run")
             
             
-    def run_command(self, command):
+    def run_command(self, command, sensor):
         self.logger.info("Running command : %s", command)
         try:
             module = self.modules[command["module"]]
             func = module[command["command"]]
-            params = {key:value for (key, value) in command.items() if not key == "module" and not key == "command"}
+            params = {key:value for (key, value) in command.items() if not key in ["module", "command"]+sensor.extra_event_properties()}
             func(**params)
         except:
             self.logger.warning("Could not run function", exc_info=True)

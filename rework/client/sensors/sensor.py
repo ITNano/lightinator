@@ -18,6 +18,9 @@ class Sensor(object):
     def push_event(self, event_name):
         self.publisher.push_event(self, event_name)
         
+    def extra_event_properties(self):
+        return []
+        
     def check_valid(self, event_name, command):
         return True
         

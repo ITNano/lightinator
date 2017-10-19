@@ -2,6 +2,8 @@ import logging
 import inspect
 import projectpath
 import util
+import i2c
+import ioutil
 
 class Core(object):
 
@@ -13,7 +15,15 @@ class Core(object):
         self.indicators = []
         
     
-    def setup_hardware(self, sensors, status_indicators, event_engine):
+    def setup_hardware(self, extensioncards, sensors, status_indicators, event_engine):
+        # ----------------- SETUP GPIO ------------------ #
+        ioutil.init()
+        
+        # -------------- EXTENSION CARDS ---------------- #
+        for card in extensioncards:
+            ioutil.add_extension_card(i2c.ExtensionCard(**card))
+    
+        # ------------------- SENSORS ------------------- #
         for sensor in sensors:
             sensor_type = sensor.pop("type", None)
             if sensor_type is not None:
@@ -22,6 +32,7 @@ class Core(object):
             else:
                 self.logger.warning("Sensor without specified type found in configuration!")
                 
+        # --------------- STATUS INDICATORS ------------- #
         for indicator in status_indicators:
             indicator_type = indicator.pop("type", None)
             if indicator_type is not None:

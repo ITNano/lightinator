@@ -8,6 +8,9 @@ SENSOR_PATH = os.path.join(LIB_PATH, "sensors")
 STATUS_INDICATOR_PATH = os.path.join(LIB_PATH, "outsensors")
 FUNC_PATH = os.path.join(LIB_PATH, "functionality")
 
+GPIO_PATH = os.path.join(BASE_PATH, "Adafruit_Python_GPIO")
+PUREIO_PATH = os.path.join(BASE_PATH, "Adafruit_Python_PureIO")
+
 CONFIG_PATH = os.path.join(BASE_PATH, "main.conf")
 
 def get_config_file(name):
