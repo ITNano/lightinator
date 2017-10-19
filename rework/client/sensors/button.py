@@ -24,6 +24,3 @@ class Button(Sensor):
             
         return success
         
-        
-    def herp(self):
-        self.push_event('herp')

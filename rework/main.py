@@ -33,8 +33,6 @@ def keep_server_alive():
             event_engine.push_event(sensor.Sensor('ir'), 'up')
             event_engine.push_event(sensor.Sensor('ir'), 'toggleActiveOld')
             event_engine.push_event(sensor.Sensor('ir'), 'up')
-        elif cmd == 'test2':
-            core.sensors[0].herp()
         else:
             print("Unknown command, try again?")
             
