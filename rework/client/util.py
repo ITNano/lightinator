@@ -16,7 +16,8 @@ def load_folder_modules(path, accept_func=None):
             mod = loader.load_module(name)
             
             logger.info("Loaded module '%s'", name)
-            modules[name] = mod
+            if accept_func is None or accept_func(name, mod):
+                modules[name] = mod
         except:
             logger.warning("Skipped module '%s' due to mysterious error", name, exc_info=True)
                 
