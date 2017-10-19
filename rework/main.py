@@ -6,11 +6,13 @@ import logging
 from client import projectpath
 sys.path.append(projectpath.LIB_PATH)
 sys.path.append(projectpath.SENSOR_PATH)
+sys.path.append(projectpath.STATUS_INDICATOR_PATH)
 sys.path.append(projectpath.FUNC_PATH)
 
 from client import configuration as conf
 from client import event
-from client import core
+from client.core import Core
+from client.event import EventEngine
 from client.sensors import sensor
 
 def keep_server_alive():
@@ -24,6 +26,15 @@ def keep_server_alive():
             break
         elif cmd == 'easteregg':
             print("Wohooo, hello :D")
+        elif cmd == 'test':
+            event_engine.push_event(sensor.Sensor('ir'), 'up')
+            event_engine.push_event(sensor.Sensor('ir'), 'up')
+            event_engine.push_event(sensor.Sensor('ir'), 'toggleActiveOld')
+            event_engine.push_event(sensor.Sensor('ir'), 'up')
+            event_engine.push_event(sensor.Sensor('ir'), 'toggleActiveOld')
+            event_engine.push_event(sensor.Sensor('ir'), 'up')
+        elif cmd == 'test2':
+            core.sensors[0].herp()
         else:
             print("Unknown command, try again?")
             
@@ -39,13 +50,13 @@ if __name__ == "__main__":
     conf.load_config()
     
     # Startup sequence
-    curr_core = core.Core()
-    curr_core.setup_hardware(conf.get_conf('sensors'), conf.get_conf('statusindicators'))
-    event.setup_events(conf.get_conf('variables'), conf.get_conf('events'))
-    curr_core.activate_sensors()
+    event_engine = EventEngine(conf.get_conf('variables'), conf.get_conf('events'))
+    core = Core()
+    core.setup_hardware(conf.get_conf('sensors'), conf.get_conf('statusindicators'), event_engine)
+    core.activate_sensors()
     
     # Available for commands
     keep_server_alive()
     
     # Cleanup sequence
-    curr_core.deactivate_sensors()
+    core.deactivate_sensors()
