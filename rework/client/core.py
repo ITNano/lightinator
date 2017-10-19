@@ -11,21 +11,22 @@ class Core(object):
         self.sensors = []
         
     
-    def setup_hardware(self, sensors, status_indicators):
+    def setup_hardware(self, sensors, status_indicators, event_engine):
         for sensor in sensors:
             sensor_type = sensor.pop("type", None)
             if sensor_type is not None:
-                self.load_sensor(sensor_type, sensor)
+                self.load_sensor(event_engine, sensor_type, sensor)
             else:
                 self.logger.warning("Sensor without specified type found in configuration!")
                 
         self.logger.warning("Ignoring status indicators (during dev)")
         
         
-    def load_sensor(self, sensor_type, args):
+    def load_sensor(self, event_engine, sensor_type, args):
         try:
             sensor_mod = self.sensor_modules[sensor_type]
             sensor_class = [obj for (name, obj) in inspect.getmembers(sensor_mod) if name.lower() == sensor_type.lower()][0]
+            args["event_engine"] = event_engine
             instance = sensor_class(**args)
             self.sensors.append(instance)
             self.logger.info("Sensor of type %s added with ID %s", sensor_type, instance.get_id())

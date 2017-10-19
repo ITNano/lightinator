@@ -1,9 +1,10 @@
 from sensor import Sensor
+import event
 
 class Button(Sensor):
 
-    def __init__(self, id, pin, power=0, holdInterval=1):
-        Sensor.__init__(self, id)
+    def __init__(self, event_engine, id, pin, power=0, holdInterval=1):
+        Sensor.__init__(self, event_engine, id)
         self.pin = pin
         self.power = power
         self.holdInterval = holdInterval
@@ -22,4 +23,7 @@ class Button(Sensor):
                 success = success and self.holdTime < float(command["holdMax"])
             
         return success
-                
+        
+        
+    def herp(self):
+        self.push_event('herp')
