@@ -7,7 +7,6 @@ runningServers = {}
     
 def runServer(addr, callback, preprocessor=None, useMainThread=False):
     def run(addr, callback):
-        global shouldRunServer
         runningServers[addr] = True
         conn = getServerConn(addr)
         while runningServers.get(addr) is True:

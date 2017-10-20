@@ -16,3 +16,9 @@ def load_config():
         
 def get_conf(prop):
     return conf[prop]
+    
+def get_module_config(module):
+    with open(projectpath.MODULES_CONFIG_PATH) as conf_file:
+        conf = json.load(conf_file)
+        
+    return conf.get(module)

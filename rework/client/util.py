@@ -22,3 +22,9 @@ def load_folder_modules(path, accept_func=None):
             logger.warning("Skipped module '%s' due to mysterious error", name, exc_info=True)
                 
     return modules
+    
+    
+def run_daemon(target, args=None):
+    t = threading.Thread(target=target, args=args)
+    t.daemon = True
+    t.start()
