@@ -10,6 +10,7 @@ OUT = 0
 ON = 1
 OFF = 0
 PUD_DOWN = GPIO.PUD_DOWN
+cleaned_up = False
 
 def init():
     GPIO.setmode(GPIO.BCM)
@@ -60,14 +61,18 @@ def register_for_change_event(pin, callback):
         GPIO.add_event_callback(pin, callback)
         
 def unregister_from_change_event(pin):
-    card = get_extension_card(pin)
-    if card is not None:
-        logging.warning("WARNING: Event detection not yet implemented for extension cards!")
-    else:
-        GPIO.remove_event_detect(pin)
+    if not cleaned_up:
+        card = get_extension_card(pin)
+        if card is not None:
+            logging.warning("WARNING: Event detection not yet implemented for extension cards!")
+        else:
+            GPIO.remove_event_detect(pin)
         
 def cleanup():
     global extension_cards
-    extension_cards = []
-    GPIO.cleanup()
+    global cleaned_up
+    if not cleaned_up:
+        extension_cards = []
+        GPIO.cleanup()
+        cleaned_up = True
     
