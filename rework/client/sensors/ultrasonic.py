@@ -96,3 +96,4 @@ class UltraSonic(Sensor):
         
     def deactivate(self):
         self.continous_measure = False
+        self.io.cleanup()

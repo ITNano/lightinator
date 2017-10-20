@@ -75,5 +75,6 @@ class Button(Sensor):
     def is_active(self):
         return self.get_value() == 1
         
-    def terminate(self):
+    def deactivate(self):
         self.io.unregister_from_change_event(self.pin)
+        self.io.cleanup()
