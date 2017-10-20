@@ -1,5 +1,6 @@
 import logging
 import pkgutil
+import threading
 
 """
   Loads the available modules from the given path. Code inspired by the Brain

@@ -5,7 +5,7 @@ import logging
     
 # --------------- SETUP CONNECTION --------------- #    
 def get_response_server(addr):
-    return get_server_conn(addr, zmq.RES)
+    return get_server_conn(addr, zmq.REP)
     
 def get_publisher_server(addr):
     return get_server_conn(addr, zmq.PUB)
@@ -38,7 +38,7 @@ def get_client_conn(addr, type, filter=None):
     client = context.socket(type)
     client.connect(addr)
     if type == zmq.SUB:
-        client.setsockopt(zmq.SUBSCRIBE, filter)
+        client.setsockopt(zmq.SUBSCRIBE, b'')
     return client
     
 def get_address(proto, name):
@@ -60,7 +60,7 @@ def run_listener(name, conn, callback, preprocessor=None, use_main_thread=False)
         keep_listening[name] = True
         while keep_listening[name] is True:
             try:
-                msg = conn.recv()
+                msg = conn.recv_string()
                 if preprocessor is not None:
                     msg = preprocessor(msg)
                 run_daemon(target=callback, args=(name, msg,))

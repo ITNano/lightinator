@@ -1,10 +1,13 @@
 import configuration
 import mq
+import json
+import logging
 
 publisher = None 
 outconn = None
 bulbs = []
-colorlist = {}
+colorlist = {"list": [], "index":0}
+logger = logging.getLogger(__name__)
 
 # --------------------- Compulsory functions ----------------------- #
 def get_functions():
@@ -26,7 +29,6 @@ def get_functions():
 			"unselectbyname":	unselect_bulb_by_name,
             "toggleselect":     toggle_bulb,
             "toggleselectbyname":toggle_bulb_by_name,
-			"toggleselectall":	toggle_selected_bulbs,
 			"activate":		    activate_bulbs,
 			"deactivate":	    deactivate_bulbs
 	}
@@ -39,17 +41,19 @@ def set_publisher(event_engine):
 # -------------------------- Helper functions ---------------------------- #
 def load_config():
     global outconn
-    conf = configuration.get_module_config(lights)
-    outconn = mq.get_publisher_client(conf["server"]["outconn"])
+    conf = configuration.get_module_config("lights")
+    outconn = mq.get_request_client(conf["server"]["outconn"])
     inconn = mq.get_subscriber_client(conf["server"]["inconn"], "lights")
     mq.run_listener("light_updates", inconn, server_update, lambda msg: json.loads(msg.strip("lights ")))
+    send_message(json.dumps({"sync":1}))
     
 def send_value_update(property, value):
     publisher.update_value(property, value)
     
 def send_message(cmd):
-    message = json.dumps(cmd)
-    conn.send("lights "+message)
+    outconn.send_string(json.dumps(cmd))
+    read = outconn.recv_string()
+    logger.debug("Got response from service: "+read)
     
 def find_bulb(index):
     for bulb in bulbs:
@@ -93,11 +97,11 @@ def lists_equal(list1, list2):
 def server_update(name, msg):
     global bulbs
     if name == "light_updates":
-        print("Got an update from the server")
         if msg.get("sync") is not None:
-            bulbs = msg["sync"]
-            for bulb in bulbs:
-                bulb["selected"] = False
+            bulbs = msg["bulbs"]
+            for i in range(len(bulbs)):
+                bulbs[i]["selected"] = False
+                bulbs[i]["index"] = i
         elif msg.get("selected") is not None:
             find_bulb(msg["bulb"])["selected"] = msg["selected"]
             send_value_update("lights.selected."+str(msg["bulb"]), msg["selected"])
@@ -113,7 +117,7 @@ def set_color_by_list(list, index):
     if not lists_equal(list, colorlist["list"]):
         colorlist["list"] = list
     if type(index) == float:
-        index = len(colorlist["list"])*index
+        index = round(len(colorlist["list"])*index)
         
     colorlist["index"] = index
     set_color(colorlist["list"][colorlist["index"]])
@@ -168,6 +172,12 @@ def dec_speed(decrease):
 def set_effect_time_difference(etd):
     send_message({"cmd": "setetd", "etd": etd, "bulbs": get_selected_bulb_indexes()})
     
+def activate_bulbs():
+    send_message({"cmd": "activate", "bulbs": get_selected_bulb_indexes()})
+    
+def deactivate_bulbs():
+    send_message({"cmd": "deactivate", "bulbs": get_selected_bulb_indexes()})
+    
             
 # ---------------------------------------------------------------------- #
 # ---------------------- SELECTION FUNCTIONALITY ----------------------- #
@@ -179,12 +189,6 @@ def connect_to_bulb(bulb):
 def disconnect_from_bulb(bulb):
     bulb["selected"] = False
     send_value_update("lights.selected."+str(bulb["index"]), 0)
-    
-def announce_connection_attempt(index, response):
-    bulb = find_bulb(index)
-    bulb["selected"] = bool(json.loads(response)["connected"])
-    send_value_update("lights.selecting."+str(index), 0)
-    send_value_update("lights.selected."+str(index), bulb["selected"])
     
 def select_bulb(index):
     bulb = find_bulb(index)
@@ -221,3 +225,10 @@ def toggle_bulb_by_name(name):
             disconnect_from_bulb(bulb)
         else:
             connect_to_bulb(bulb)
+            
+            
+            
+# ---------------------------------------------------------------------- #
+# -------------- Load connections and other config stuff --------------- #
+# ---------------------------------------------------------------------- #  
+load_config()
