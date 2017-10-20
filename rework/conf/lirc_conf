@@ -1,0 +1,34 @@
+begin
+  remote = *
+  button = KEY_RIGHT
+  prog = pylirc
+  config = right
+end
+
+begin
+  remote = *
+  button = KEY_LEFT
+  prog = pylirc
+  config = left
+end
+
+begin
+  remote = *
+  button = KEY_UP
+  prog = pylirc
+  config = up
+end
+
+begin
+  remote = *
+  button = KEY_DOWN
+  prog = pylirc
+  config = down
+end
+
+begin
+  remote = *
+  button = KEY_OK
+  prog = pylirc
+  config = toggleActive
+end

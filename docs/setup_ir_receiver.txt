@@ -1,5 +1,8 @@
 sudo apt-get install lirc
 sudo apt-get install liblircclient-dev
-sudo pip install pylirc2
+sudo pip3 install pylirc2
 
 http://alexba.in/blog/2013/01/06/setting-up-lirc-on-the-raspberrypi/
+
+NOTE:
+Important fix for python3 - https://github.com/offlinehacker-playground/pylirc2/issues/3#issuecomment-170238309

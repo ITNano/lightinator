@@ -42,7 +42,7 @@ if __name__ == "__main__":
     print("=================================")
     print("===== STARTING IOT SERVER =======")
     print("=================================")
-    logging.basicConfig(level=10)
+    logging.basicConfig(level=logging.INFO)
         
     # Initial load of configs
     conf.load_config()
