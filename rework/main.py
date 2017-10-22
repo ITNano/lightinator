@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import logging.config
 
 # Setup so that imports be happy.
 from client import projectpath
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     print("=================================")
     print("===== STARTING IOT SERVER =======")
     print("=================================")
-    logging.basicConfig(level=logging.INFO)
+    logging.config.fileConfig(projectpath.LOGGING_CONFIG_PATH)
         
     # Initial load of configs
     conf.load_config()

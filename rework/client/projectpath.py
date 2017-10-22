@@ -11,8 +11,10 @@ FUNC_PATH = os.path.join(LIB_PATH, "functionality")
 GPIO_PATH = os.path.join(BASE_PATH, "Adafruit_Python_GPIO")
 PUREIO_PATH = os.path.join(BASE_PATH, "Adafruit_Python_PureIO")
 
-CONFIG_PATH = os.path.join(BASE_PATH, "main.conf")
-MODULES_CONFIG_PATH = os.path.join(BASE_PATH, "modules.conf")
+CONF_FOLDER = os.path.join(BASE_PATH, "conf")
+CONFIG_PATH = os.path.join(CONF_FOLDER, "main.conf")
+MODULES_CONFIG_PATH = os.path.join(CONF_FOLDER, "modules.conf")
+LOGGING_CONFIG_PATH = os.path.join(CONF_FOLDER, "logging.conf")
 
 def get_config_file(name):
-    return os.path.join(BASE_PATH, name)
+    return os.path.join(CONF_FOLDER, name)
