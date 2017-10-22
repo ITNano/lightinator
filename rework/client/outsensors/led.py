@@ -29,7 +29,6 @@ class LED(StatusIndicator):
             self.off()
             
     def on_static(self, prop, value):
-        print("LED static called with val ", value)
         if value:
             self.on()
         else:
