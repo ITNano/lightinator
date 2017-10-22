@@ -102,11 +102,18 @@ def server_update(name, msg):
             for i in range(len(bulbs)):
                 bulbs[i]["selected"] = False
                 bulbs[i]["index"] = i
-        elif msg.get("selected") is not None:
-            find_bulb(msg["bulb"])["selected"] = msg["selected"]
-            send_value_update("lights.selected."+str(msg["bulb"]), msg["selected"])
+        elif msg.get("connected") is not None:
+            find_bulb(msg["bulb"])["selected"] = msg["connected"]
+            send_value_update("lights.selected."+str(msg["bulb"]), msg["connected"])
         elif msg.get("update") is not None:
-            find_bulb(msg["bulb"])[msg["update"]] = msg["value"]
+            if msg.get("bulb") is not None:
+                updated_bulbs = [msg.get("bulb")]
+            else:
+                updated_bulbs = msg.get("bulbs")
+            if not type(msg.get("value")) == list:
+                msg["value"] = len(msg["value"])*[msg["value"]]
+            for i in range(len(updated_bulbs)):
+                find_bulb(updated_bulbs[i])[msg["update"]] = msg["value"][i]
     
 # ------------------- Implementation specific functions ------------------ #
 def set_color(color):
@@ -120,6 +127,7 @@ def set_color_by_list(list, index):
         index = round(len(colorlist["list"])*index)
         
     colorlist["index"] = index
+    logger.debug("Setting colorlist: %s with index %s", colorlist["list"], colorlist["index"])
     set_color(colorlist["list"][colorlist["index"]])
     
 def set_color_by_list_relative(list, change):
