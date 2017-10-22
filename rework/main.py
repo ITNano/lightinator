@@ -16,13 +16,20 @@ from client.core import Core
 from client.event import EventEngine
 from client.sensors import sensor
 
+history = []
+
 def keep_server_alive():
     print("")
     print("=================================")
     print("======== SERVER ONLINE ==========")
     print("=================================")
     while(True):
+        global history
         cmd = input(" > ")
+        
+        if cmd == "prev":
+            cmd = history.pop()
+        
         if cmd == 'end':
             break
         elif cmd == 'easteregg':
@@ -34,8 +41,19 @@ def keep_server_alive():
             event_engine.push_event(sensor.Sensor('ir'), 'up')
             event_engine.push_event(sensor.Sensor('ir'), 'toggleActiveOld')
             event_engine.push_event(sensor.Sensor('ir'), 'up')
+        elif cmd[:6] == "event ":
+            data = cmd.split()
+            success = False
+            for sensor in core.sensors:
+                if sensor.get_id() == data[1]:
+                    event_engine.push_event(sensor, data[2])
+                    success = True
+                    break
+            if not success:
+                logging.warning("Could not find the requested sensor")
         else:
             print("Unknown command, try again?")
+        history.append(cmd)
             
     return
 
