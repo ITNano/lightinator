@@ -79,7 +79,7 @@ def wifi_online(ssid, nic='wlan0'):
     return ssid in [cell.ssid for cell in Cell.all(nic)]
     
 def is_connected(ssid, nic='wlan0'):
-    return get_current_ssid(nic) == ssid and wifi_online(ssid, nic)
+    return get_current_ssid(nic) == ssid
     
 def send_message(content, nic, addr, port, retransmits=3):
     logger.info("Sending packet to "+addr+":"+str(port))
