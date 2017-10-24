@@ -43,19 +43,24 @@ def keep_server_alive():
             event_engine.push_event(sensor.Sensor('ir'), 'up')
         elif cmd[:6] == "event ":
             data = cmd.split()
-            success = False
-            for sensor in core.sensors:
-                if sensor.get_id() == data[1]:
-                    event_engine.push_event(sensor, data[2])
-                    success = True
-                    break
-            if not success:
+            if not trigger_sensor(data[1], data[2]):
                 logging.warning("Could not find the requested sensor")
+                
+        elif cmd[:2] == "b ":
+            if not trigger_sensor("button"+cmd[2:], "press"):
+                logging.warning("Could not find the requested button")
         else:
             print("Unknown command, try again?")
         history.append(cmd)
             
     return
+    
+def trigger_sensor(sensor_id, event):
+    for sensor in core.sensors:
+        if sensor.get_id() == sensor_id:
+            event_engine.push_event(sensor, event)
+            return True
+    return False
 
 if __name__ == "__main__":
     print("=================================")
