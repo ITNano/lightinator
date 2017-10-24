@@ -1,27 +1,14 @@
 import mq
 import json
-import lights
 import logging
+import bulb as bulbmodule
 
 logger = logging.getLogger(__name__)
 
 publisher = None
 responsers = {}
-bulbs = {}
-
-def init():
-    with open("setup.conf") as conf_file:
-        conf = json.loads(conf_file.read())
-
-    global publisher
-    publisher = mq.get_publisher_server(conf["publisher"])
-    for address in conf["responseaddr"]:
-        response_server = mq.get_response_server(address)
-        mq.run_listener(address, response_server, handle_command)
-        responsers[address] = response_server
-        
-    lights.load_config(conf["hardware"])
-        
+bulbs = []
+    
 def handle_command(name, msg):
     responsers[name].send_string("ok")
     msg = str(msg)
@@ -32,52 +19,95 @@ def handle_command(name, msg):
     logger.info("Handling command: %s", cmd)
         
     if cmd.get("sync") is not None:
-        publisher.send_string(json.dumps({"sync":True, "bulbs":lights.get_all_bulbs()}))
+        publisher.send_string(json.dumps({"sync":True, "bulbs":[bulb.get_bulb_as_data() for bulb in bulbs]}))
     elif cmd.get("cmd") == "setcolor":
-        col = cmd.get("color")
-        success = lights.set_color(lights.get_bulbs_by_indexes(cmd.get("bulbs")), col.get("red", 0), col.get("green", 0), col.get("blue", 0), col.get("white", 0))
-        if success:
-            send_prop_update(cmd.get("bulbs"), "color")
+        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("color"), lambda bulb, color: bulb.set_color(color), lambda bulb: bulb.get_color())
+        send_prop_update(res["bulbs"], "color", res["values"])
     elif cmd.get("cmd") == "setdimmer":
-        dimmer = cmd.get("dimmer")
-        success = lights.set_strength(lights.get_bulbs_by_indexes(cmd.get("bulbs")), dimmer)
-        if success:
-            send_prop_update(cmd.get("bulbs"), "strength")
+        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("dimmer"), lambda bulb, strength: bulb.set_strength(strength), lambda bulb: bulb.get_strength())
+        send_prop_update(res["bulbs"], "strength", res["values"])
     elif cmd.get("cmd") == "setmode":
-        mode = cmd.get("mode")
-        success = lights.set_mode(lights.get_bulbs_by_indexes(cmd.get("bulbs")), mode)
-        if success:
-            send_prop_update(cmd.get("bulbs"), "mode")
+        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("mode"), lambda bulb, mode: bulb.set_mode is not None and bulb.set_mode(mode), lambda bulb: bulb.get_mode())
+        send_prop_update(res["bulbs"], "mode", res["values"])
     elif cmd.get("cmd") == "setspeed":
-        speed = cmd.get("speed")
-        success = lights.set_speed(lights.get_bulbs_by_indexes(cmd.get("bulbs")), speed)
-        if success:
-            send_prop_update(cmd.get("bulbs"), "speed")
+        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("speed"), lambda bulb, speed: bulb.set_speed is not None and bulb.set_speed(speed), lambda bulb: bulb.get_speed())
+        send_prop_update(res["bulbs"], "speed", res["values"])
     elif cmd.get("cmd") == "setetd":
-        etd = cmd.get("etd")
-        success = lights.set_etd(lights.get_bulbs_by_indexes(cmd.get("bulbs")), etd)
-        if success:
-            send_prop_update(cmd.get("bulbs"), "etd")
+        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("etd"), lambda bulb, etd: bulb.set_etd is not None and bulb.set_etd(etd), lambda bulb: bulb.get_etd())
+        send_prop_update(res["bulbs"], "etd", res["values"])
     elif cmd.get("cmd") == "connect":
-        connected = lights.connect_to_bulb(lights.get_bulb_by_index(cmd.get("bulb")))
-        publisher.send_string(json.dumps({"connected": connected, "bulb": cmd.get("bulb")}))
+        for bulb in get_bulbs_by_ids(cmd.get("bulbs")):
+            connected = bulb.connect is not None and bulb.connect()
+            publisher.send_string(json.dumps({"connected": connected, "bulb": bulb.get_id()}))
     elif cmd.get("cmd") == "activate":
-        success = lights.activate_bulbs(lights.get_bulbs_by_indexes(cmd.get("bulbs")))
-        if success:
-            send_prop_update(cmd.get("bulbs"), "color")
+        res = do_multiple_bulbs(cmd.get("bulbs"), None, lambda bulb, x: bulb.activate(), lambda bulb: bulb.get_color())
+        send_prop_update(res["bulbs"], "color", res["values"])
     elif cmd.get("cmd") == "deactivate":
-        success = lights.deactivate_bulbs(lights.get_bulbs_by_indexes(cmd.get("bulbs")))
-        if success:
-            send_prop_update(cmd.get("bulbs"), "color")
+        res = do_multiple_bulbs(cmd.get("bulbs"), None, lambda bulb, x: bulb.deactivate(), lambda bulb: bulb.get_color())
+        send_prop_update(res["bulbs"], "color", res["values"])
     else:
-        print("Got unknown command: ", cmd)
+        logger.warning("Got unknown command: ", cmd)
         
-def send_prop_update(bulbs, prop):
-    publisher.send_string(json.dumps({"update": prop, "value": get_prop_from_bulbs(bulbs, prop), "bulbs": bulbs}))
-    
-def get_prop_from_bulbs(bulbs, prop):
-    res = []
-    for index in bulbs:
-        bulb = lights.get_bulb_by_index(index)
-        res.append(bulb[prop])
+def do_multiple_bulbs(ids, parameter, action, value_retriever):
+    if not type(parameter) == list:
+        parameter = [parameter]*len(ids)
+        
+    res = {"bulbs": [], "values": []}
+    for index, bulb in enumerate(get_bulbs_by_ids(ids)):
+        if action(bulb, parameter[index]):
+            res["bulbs"].append(bulb.get_id())
+            res["values"].append(value_retriever(bulb))
     return res
+            
+        
+def send_prop_update(bulbs, prop, values):
+    if not type(bulbs) == list or len(bulbs) > 0:
+        publisher.send_string(json.dumps({"update": prop, "value": values, "bulbs": bulbs}))
+    
+# ====================================== HELPERS ================================= #
+def init():
+    with open("setup.conf") as conf_file:
+        conf = json.loads(conf_file.read())
+
+    global publisher
+    global bulbs
+    publisher = mq.get_publisher_server(conf["publisher"])
+    for address in conf["responseaddr"]:
+        response_server = mq.get_response_server(address)
+        mq.run_listener(address, response_server, handle_command)
+        responsers[address] = response_server
+        
+    bulbs = load_bulbs(conf["hardware"])
+
+def load_bulbs(conf):
+    bulbs = []
+    for bulb in conf["bulbs"]:
+        bulbs.append(create_bulb(bulb, conf))
+    return bulbs
+        
+def create_bulb(bulb_conf, conf):
+    network = get_network(bulb_conf, conf.get("defaultnetwork", {}))
+    id = bulb_conf.get("id", max([bulb.get_id() for bulb in bulbs]+[0])+1)
+    return bulbmodule.ChinaBulb(id, bulb_conf.get("name", "Bulb_"+str(id)), network)
+    
+def get_network(custom, default):
+    if custom is None:
+        custom = {}
+        if default is None:
+            logger.warning("WARNING: No available network description found. Please check configuration!")
+        
+    return {prop: custom.get(prop, default.get(prop)) for prop in ["nic", "ssid", "address", "port"]}
+    
+def get_bulbs_by_ids(ids):
+    if not type(ids) == list:
+        ids = [ids]
+    return sorted([bulb for bulb in bulbs if bulb.get_id() in ids], key=bulb_sort_order)
+    
+def get_bulbs_by_names(names):
+    if not type(names) == list:
+        names = [names]
+    return sorted([bulb for bulb in bulbs if bulb.get_name() in names], key=bulb_sort_order)
+    
+def bulb_sort_order(bulb):
+    return "" if bulb.is_connected is not None and bulb.is_connected() else bulb.get_name() 
+ 

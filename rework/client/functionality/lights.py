@@ -55,9 +55,9 @@ def send_message(cmd):
     read = outconn.recv_string()
     logger.debug("Got response from service: "+read)
     
-def find_bulb(index):
+def find_bulb(id):
     for bulb in bulbs:
-        if bulb["index"] == index:
+        if bulb["id"] == id:
             return bulb
             
 def find_bulb_by_name(name):
@@ -72,11 +72,11 @@ def get_selected_bulbs():
             res.append(bulb)
     return res
             
-def get_selected_bulb_indexes():
+def get_selected_bulb_ids():
     res = []
     for bulb in bulbs:
         if bulb["selected"]:
-            res.append(bulb["index"])
+            res.append(bulb["id"])
     return res
     
 def lists_equal(list1, list2):
@@ -96,12 +96,12 @@ def lists_equal(list1, list2):
 # ------------------- Handle server updates ------------------ #
 def server_update(name, msg):
     global bulbs
+    print("Got a message from server: ", msg)
     if name == "light_updates":
         if msg.get("sync") is not None:
             bulbs = msg["bulbs"]
-            for i in range(len(bulbs)):
-                bulbs[i]["selected"] = False
-                bulbs[i]["index"] = i
+            for bulb in bulbs:
+                bulb["selected"] = False
         elif msg.get("connected") is not None:
             find_bulb(msg["bulb"])["selected"] = msg["connected"]
             send_value_update("lights.selected."+str(msg["bulb"]), msg["connected"])
@@ -117,7 +117,7 @@ def server_update(name, msg):
     
 # ------------------- Implementation specific functions ------------------ #
 def set_color(color):
-    send_message({"cmd": "setcolor", "color": color, "bulbs": get_selected_bulb_indexes()})
+    send_message({"cmd": "setcolor", "color": color, "bulbs": get_selected_bulb_ids()})
     
 def set_color_by_list(list, index):
     global colorlist
@@ -143,63 +143,63 @@ def set_color_by_list_relative(list, change):
     set_color(colorlist["list"][colorlist["index"]])
     
 def set_dimmer(value):
-    send_message({"cmd": "setdimmer", "value": value, "bulbs": get_selected_bulb_indexes()})
+    send_message({"cmd": "setdimmer", "value": value, "bulbs": get_selected_bulb_ids()})
     
 def inc_dimmer(increase):
     dimmers = []
-    indexes = []
+    ids = []
     for bulb in bulbs:
         if bulb["selected"]:
             dimmer = max(0, min(1, bulb["dimmer"]+increase))
             dimmers.append(dimmer)
-            indexes.append(bulb["index"])
-    send_message({"cmd": "setdimmer", "value": dimmers, "bulbs": indexes})
+            ids.append(bulb["id"])
+    send_message({"cmd": "setdimmer", "value": dimmers, "bulbs": ids})
     
 def dec_dimmer(decrease):
     inc_dimmer(-decrease)
     
 def set_mode(mode):
-    send_message({"cmd": "setmode", "mode": mode, "bulbs":get_selected_bulb_indexes()})
+    send_message({"cmd": "setmode", "mode": mode, "bulbs":get_selected_bulb_ids()})
     
 def set_speed(speed):
-    send_message({"cmd": "setspeed", "speed": speed, "bulbs": get_selected_bulb_indexes()})
+    send_message({"cmd": "setspeed", "speed": speed, "bulbs": get_selected_bulb_ids()})
     
 def inc_speed(increase):
     speeds = []
-    indexes = []
+    ids = []
     for bulb in bulbs:
         if bulb["selected"]:
             speed = max(0, min(1, bulb["speed"] + increase))
             speeds.append(speed)
-            indexes.append(bulb["index"])
-    send_message({"cmd": "setspeed", "speed": speeds, "bulbs": indexes})
+            ids.append(bulb["ids"])
+    send_message({"cmd": "setspeed", "speed": speeds, "bulbs": ids})
     
 def dec_speed(decrease):
     inc_speed(-decrease)
     
 def set_effect_time_difference(etd):
-    send_message({"cmd": "setetd", "etd": etd, "bulbs": get_selected_bulb_indexes()})
+    send_message({"cmd": "setetd", "etd": etd, "bulbs": get_selected_bulb_ids()})
     
 def activate_bulbs():
-    send_message({"cmd": "activate", "bulbs": get_selected_bulb_indexes()})
+    send_message({"cmd": "activate", "bulbs": get_selected_bulb_ids()})
     
 def deactivate_bulbs():
-    send_message({"cmd": "deactivate", "bulbs": get_selected_bulb_indexes()})
+    send_message({"cmd": "deactivate", "bulbs": get_selected_bulb_ids()})
     
             
 # ---------------------------------------------------------------------- #
 # ---------------------- SELECTION FUNCTIONALITY ----------------------- #
 # ---------------------------------------------------------------------- #            
 def connect_to_bulb(bulb):
-    send_value_update("lights.selecting."+str(bulb["index"]), 1)
-    send_message({"cmd": "connect", "bulb": bulb["index"]})
+    send_value_update("lights.selecting."+str(bulb["id"]), 1)
+    send_message({"cmd": "connect", "bulbs": bulb["id"]})
     
 def disconnect_from_bulb(bulb):
     bulb["selected"] = False
-    send_value_update("lights.selected."+str(bulb["index"]), 0)
+    send_value_update("lights.selected."+str(bulb["id"]), 0)
     
-def select_bulb(index):
-    bulb = find_bulb(index)
+def select_bulb(id):
+    bulb = find_bulb(id)
     if bulb is not None and not bulb["selected"]:
         connect_to_bulb(bulb)
     
@@ -208,8 +208,8 @@ def select_bulb_by_name(name):
     if bulb is not None and not bulb["selected"]:
         connect_to_bulb(bulb)
     
-def unselect_bulb(index):
-    bulb = find_bulb(index)
+def unselect_bulb(id):
+    bulb = find_bulb(id)
     if bulb is not None and bulb["selected"]:
         disconnect_from_bulb(bulb)
     
@@ -218,8 +218,8 @@ def unselect_bulb_by_name(name):
     if bulb is not None and bulb["selected"]:
         disconnect_from_bulb(bulb)
     
-def toggle_bulb(index):
-    bulb = find_bulb(index)
+def toggle_bulb(id):
+    bulb = find_bulb(id)
     if bulb is not None:
         if bulb["selected"]:
             disconnect_from_bulb(bulb)

@@ -17,4 +17,4 @@ if __name__ == "__main__":
         if cmd == "end":
             break
         else:
-            logger.info("Unknown command. Duh.")
+            print("Unknown command. Duh.")
