@@ -42,7 +42,7 @@ class EventEngine(object):
         
     # ------------------ Internal exposed functions ----------------- #    
     def set_state(self, state):
-        data["state"] = state
+        self.state = state
         
     def toggle_sensor(self, sensor):
         if sensor in self.disabled_devices:
