@@ -8,6 +8,12 @@ class StatusIndicator(object):
         
     def set_publisher(self, event_engine):
         self.publisher = event_engine
+        for (prop, func) in self.get_bind_values():
+            if prop is not None:
+                self.publisher.add_property_listener(prop, func)
+                
+    def get_bind_values(self):
+        return []
         
         
     def get_id(self):

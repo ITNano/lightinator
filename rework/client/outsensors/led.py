@@ -7,19 +7,14 @@ class LED(StatusIndicator):
 
     def __init__(self, id, pin, blink, static):
         StatusIndicator.__init__(self, id)
-        self.bind_values = {
-            (blink, self.on_blink), (static, self.on_static)
-        }
+        self.bind_values = [(blink, self.on_blink), (static, self.on_static)]
         self.pin = pin
         self.blinking = False
         self.io = ioutil
         self.io.set_direction(self.pin, self.io.OUT)
         
-    def set_publisher(self, event_engine):
-        StatusIndicator.set_publisher(self, event_engine)
-        for (prop, func) in self.bind_values:
-            if prop is not None:
-                self.publisher.add_property_listener(prop, func)
+    def get_bind_values(self):
+        return self.bind_values
     
     
     def on_blink(self, prop, value):
