@@ -44,12 +44,19 @@ Note that the documentation for this project still isn't so good, since I doubt 
 lightinator@matzlarsson.se.
 
 ## How to run
+### Version 1
 To start the script use:
-`sudo python lightinator.py`
+`sudo python v1/lightinator.py`
 
-One important thing to note is that this software is still not designed to be used in a general environment. It currently
+NOTE: 
+One important thing to note is that this version is still not designed to be used in a general environment. It currently
 uses a hack that involves altering the /etc/network/interfaces file on the device to a preset version. This means that
 any custom configurations might be overwritten!
+
+### Version 2
+To start the script use:
+`sudo python v2/main.py`
+
 
 ## Contributions
 Matz "Nano" Larsson - Code base
