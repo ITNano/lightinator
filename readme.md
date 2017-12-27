@@ -31,9 +31,19 @@ Pydub (audio)
 `sudo pip install pydub`
 
 Pylirc
-*See file setup_ir_receiver.txt*
+*See file docs/setup_ir_receiver.txt*
 
-## Configuration
+## Version 2
+### Configuration
+The configuration files for hardware confs are located in the v2/conf folder. An extensive guide for these has not yet
+been written so you will have to use the examples as reference. The configuration manual from v1 partly applies as well.
+
+### How to run
+To start the script use:
+`sudo python v2/main.py`
+
+## Version 1
+### Configuration
 The configuration of hardware, events on sensor usage and similar are all defined in the `lightinator.conf` file with
 json markup. The exising configuration file contains a lot of examples on how to do most possible things and is a good
 learning example but maybe not a reasonable running setup (though it is a valid setup!). All possible commands is
@@ -43,8 +53,7 @@ Note that the documentation for this project still isn't so good, since I doubt 
 (by many users). If you plan on using this on your system and have any questions, don't hesitate to mail me at
 lightinator@matzlarsson.se.
 
-## How to run
-### Version 1
+### How to run
 To start the script use:
 `sudo python v1/lightinator.py`
 
@@ -52,10 +61,6 @@ NOTE:
 One important thing to note is that this version is still not designed to be used in a general environment. It currently
 uses a hack that involves altering the /etc/network/interfaces file on the device to a preset version. This means that
 any custom configurations might be overwritten!
-
-### Version 2
-To start the script use:
-`sudo python v2/main.py`
 
 
 ## Contributions
