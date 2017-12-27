@@ -1,5 +1,5 @@
 [submodule "Adafruit_Python_GPIO"]
-	path = Adafruit_Python_GPIO
+	path = v1/Adafruit_Python_GPIO
 	url = https://github.com/adafruit/Adafruit_Python_GPIO.git
 [submodule "Adafruit_Python_PureIO"]
 	path = Adafruit_Python_PureIO
