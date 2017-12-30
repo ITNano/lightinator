@@ -49,6 +49,15 @@ def keep_server_alive():
         elif cmd[:2] == "b ":
             if not trigger_sensor("button"+cmd[2:], "press"):
                 logging.warning("Could not find the requested button")
+        elif cmd[:4] == "upd ":
+            data = cmd[4:].split()
+            if len(data) == 2:
+                if data[1][0] == "i":
+                    event_engine.update_value(data[0], int(data[1][1:]))
+                else:
+                    event_engine.update_value(data[0], data[1])
+            else:
+                logging.warning("Invalid cmd. Syntax: upd [prop] [value]")
         else:
             print("Unknown command, try again?")
         history.append(cmd)
