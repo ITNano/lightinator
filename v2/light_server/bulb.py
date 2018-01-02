@@ -53,12 +53,7 @@ class Bulb(object):
         
     def set_safe_property(self, prop, new_value):
         old_value = getattr(self, prop)
-        setattr(self, prop, new_value)
-        
-        print("Update: "+prop)
-        print("OldVal: "+str(old_value))
-        print("NewVal: "+str(new_value))
-        
+        setattr(self, prop, new_value)        
         success = self.send_update(prop)
         if not success:
             setattr(self, prop, old_value)
@@ -97,6 +92,9 @@ class WifiBulb(Bulb):
         
     def get_network_port(self):
         return self.network["port"]
+        
+    def reset_network(self):
+        return lightwifi.disconnect(self.get_ssid(), self.get_nic())
         
     def connect(self):
         return lightwifi.connect(self.get_ssid(), self.get_network_passkey(), self.get_nic())

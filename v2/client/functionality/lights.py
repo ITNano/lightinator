@@ -30,7 +30,8 @@ def get_functions():
             "toggleselect":     toggle_bulb,
             "toggleselectbyname":toggle_bulb_by_name,
 			"activate":		    activate_bulbs,
-			"deactivate":	    deactivate_bulbs
+			"deactivate":	    deactivate_bulbs,
+            "resetnw":          reset_networks
 	}
     
 def set_publisher(event_engine):
@@ -117,6 +118,11 @@ def server_update(name, msg):
                 msg["value"] = len(msg["value"])*[msg["value"]]
             for i in range(len(updated_bulbs)):
                 find_bulb(updated_bulbs[i])[msg["update"]] = msg["value"][i]
+        elif msg.get("response") is not None:
+            c = msg.get("response")
+            if c == "resetnw":
+                for b in msg.get("result").get("bulbs"):
+                    unselect_bulb(b)
     
 # ------------------- Implementation specific functions ------------------ #
 def set_color(color):
@@ -239,6 +245,9 @@ def toggle_bulb_by_name(name):
             disconnect_from_bulb(bulb)
         else:
             connect_to_bulb(bulb)
+            
+def reset_networks():
+    send_message({"cmd": "resetnetworks", "bulbs": get_selected_bulb_ids()})
             
             
             

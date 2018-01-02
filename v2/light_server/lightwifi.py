@@ -78,6 +78,16 @@ def connect(ssid, passkey=None, nic='wlan0', force_reconfig=False):
                 
     current_connection[nic]["ssid"] = None
     return False
+    
+def disconnect(ssid, nic='wlan0'):
+    args = "sudo ifdown "+nic+" && sudo ifup "+nic
+    proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+    output, err = proc.communicate(b"")
+    if proc.returncode == 0:
+        current_connection[nic]["ssid"] = None
+        return True
+    else:
+        return False
             
 def wifi_online(ssid, nic='wlan0'):
     return ssid in [cell.ssid for cell in Cell.all(nic)]

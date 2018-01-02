@@ -45,6 +45,9 @@ def handle_command(name, msg):
     elif cmd.get("cmd") == "deactivate":
         res = do_multiple_bulbs(cmd.get("bulbs"), None, lambda bulb, x: bulb.deactivate(), lambda bulb: bulb.get_color())
         send_prop_update(res["bulbs"], "color", res["values"])
+    elif cmd.get("cmd") == "resetnetworks":
+        res = do_multiple_bulbs(cmd.get("bulbs"), None, lambda bulb, x: bulb.reset_network() if hasattr(bulb, 'reset_network') else False, lambda bulb: True)
+        publisher.send_string(json.dumps({"response": "resetnw", "result": res}))
     else:
         logger.warning("Got unknown command: ", cmd)
         
