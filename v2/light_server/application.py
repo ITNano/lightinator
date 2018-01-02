@@ -24,7 +24,7 @@ def handle_command(name, msg):
         res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("color"), lambda bulb, color: bulb.set_color(color), lambda bulb: bulb.get_color())
         send_prop_update(res["bulbs"], "color", res["values"])
     elif cmd.get("cmd") == "setdimmer":
-        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("dimmer"), lambda bulb, strength: bulb.set_strength(strength), lambda bulb: bulb.get_strength())
+        res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("value"), lambda bulb, strength: bulb.set_strength(strength), lambda bulb: bulb.get_strength())
         send_prop_update(res["bulbs"], "strength", res["values"])
     elif cmd.get("cmd") == "setmode":
         res = do_multiple_bulbs(cmd.get("bulbs"), cmd.get("mode"), lambda bulb, mode: bulb.set_mode is not None and bulb.set_mode(mode), lambda bulb: bulb.get_mode())

@@ -56,21 +56,25 @@ def connect(ssid, passkey=None, nic='wlan0', force_reconfig=False):
         return True
         
     if online:
-        scheme = Scheme.find(nic, ssid)
-        if scheme is not None and not force_reconfig:
-            scheme.activate()
-            current_connection[nic]["ssid"] = ssid
-            update_broadcast_address(nic)
-            return True
-        else:
-            matching_cells = [cell for cell in Cell.all(nic) if cell.ssid == ssid]
-            if len(matching_cells) > 0:
-                scheme = Scheme.for_cell(nic, ssid, matching_cells[0], passkey)
-                scheme.save()
+        try:
+            scheme = Scheme.find(nic, ssid)
+            if scheme is not None and not force_reconfig:
                 scheme.activate()
                 current_connection[nic]["ssid"] = ssid
                 update_broadcast_address(nic)
                 return True
+            else:
+                matching_cells = [cell for cell in Cell.all(nic) if cell.ssid == ssid]
+                if len(matching_cells) > 0:
+                    scheme = Scheme.for_cell(nic, ssid, matching_cells[0], passkey)
+                    scheme.save()
+                    scheme.activate()
+                    current_connection[nic]["ssid"] = ssid
+                    update_broadcast_address(nic)
+                    return True
+        except Exception as e:
+            logger.warning("Could not connect to wifi: "+str(e))
+            return False
                 
     current_connection[nic]["ssid"] = None
     return False

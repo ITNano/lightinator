@@ -102,8 +102,11 @@ def server_update(name, msg):
             bulbs = msg["bulbs"]
             for bulb in bulbs:
                 bulb["selected"] = False
+                bulb["selecting"] = False
         elif msg.get("connected") is not None:
-            find_bulb(msg["bulb"])["selected"] = msg["connected"]
+            b = find_bulb(msg["bulb"])
+            b["selected"] = msg["connected"]
+            b["selecting"] = False
             send_value_update("lights.selected."+str(msg["bulb"]), msg["connected"])
         elif msg.get("update") is not None:
             if msg.get("bulb") is not None:
@@ -191,12 +194,15 @@ def deactivate_bulbs():
 # ---------------------- SELECTION FUNCTIONALITY ----------------------- #
 # ---------------------------------------------------------------------- #            
 def connect_to_bulb(bulb):
-    send_value_update("lights.selecting."+str(bulb["id"]), 1)
-    send_message({"cmd": "connect", "bulbs": bulb["id"]})
+    if not bulb["selecting"]:
+        bulb["selecting"] = True
+        send_value_update("lights.selecting."+str(bulb["id"]), 1)
+        send_message({"cmd": "connect", "bulbs": bulb["id"]})
     
 def disconnect_from_bulb(bulb):
-    bulb["selected"] = False
-    send_value_update("lights.selected."+str(bulb["id"]), 0)
+    if not bulb["selecting"]:
+        bulb["selected"] = False
+        send_value_update("lights.selected."+str(bulb["id"]), 0)
     
 def select_bulb(id):
     bulb = find_bulb(id)

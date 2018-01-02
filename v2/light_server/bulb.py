@@ -41,19 +41,24 @@ class Bulb(object):
     def get_max_strength(self):
         return 10
         
-    def activate():
-        return set_safe_property("color", self.prev_color)
+    def activate(self):
+        return self.set_safe_property("color", self.prev_color)
         
-    def deactivate():
+    def deactivate(self):
         if color.colors_equal(self.color, color.get_black_color()):
             return True
         else:    
             self.prev_color = self.color
-            return set_safe_property("color", color.get_black_color())
+            return self.set_safe_property("color", color.get_black_color())
         
     def set_safe_property(self, prop, new_value):
         old_value = getattr(self, prop)
         setattr(self, prop, new_value)
+        
+        print("Update: "+prop)
+        print("OldVal: "+str(old_value))
+        print("NewVal: "+str(new_value))
+        
         success = self.send_update(prop)
         if not success:
             setattr(self, prop, old_value)
